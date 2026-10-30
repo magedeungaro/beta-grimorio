@@ -333,7 +333,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <div class="card-actions"><button class="btn primary" id="btnOpen2" disabled>Carregando…</button><button class="btn" id="btnDrive2" hidden><svg viewBox="0 0 24 24" class="orb"><circle cx="12" cy="9.6" r="6.6"/><path d="M8.3 15.3L6.6 19.6h10.8l-1.7-4.3"/><path d="M4.8 19.6h14.4"/><path d="M8.6 7.4a4.2 4.2 0 0 1 2.6-1.9" opacity=".7"/><path class="spark" d="M13.6 8.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="currentColor" stroke="none"/></svg>Do Google Drive</button></div>
       <div id="recent" hidden><div class="rc-title">Continuar de onde parou</div><ul></ul></div>
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
-      <p class="fine ver">versão 2026.10.30-141939-beta</p>
+      <p class="fine ver">versão 2026.10.30-144258-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -1980,7 +1980,10 @@ async function gfetch(path, opt = {}){
   const r = await (window.__driveMock?.fetch || fetch)(API + path, { ...opt, headers:{ ...(opt.headers || {}), Authorization:'Bearer ' + tok } });
   if (r.status === 401){ GD.token = null; throw new Error('o login do Google expirou, toque de novo'); }
   if (r.status === 404) throw Object.assign(new Error('arquivo não encontrado no Drive'), { status:404 });
-  if (!r.ok) throw new Error('o Drive respondeu ' + r.status);
+  if (!r.ok){
+    let why = ''; try { const j = await r.json(); why = j.error?.errors?.[0]?.reason || j.error?.message || ''; } catch {}
+    throw Object.assign(new Error(`o Drive respondeu ${r.status}${why ? ' (' + why + ')' : ''}`), { status:r.status, why });
+  }
   return r;
 }
 function drivePick(token){
@@ -1993,7 +1996,7 @@ function drivePick(token){
       .build().setVisible(true);
   });
 }
-const metaOf = async id => (await gfetch(`/drive/v3/files/${id}?fields=id,name,version,trashed`)).json();
+const metaOf = async id => (await gfetch(`/drive/v3/files/${id}?fields=id,name,version,trashed,capabilities/canEdit&supportsAllDrives=true`)).json();
 
 async function driveConnect(){
   try { await driveToken(); toast('Conectado ao Drive ✦'); renderDrivePanel(); }
@@ -2005,9 +2008,10 @@ async function driveOpen(){
     const doc = await drivePick(await tokP); if (!doc) return;
     drivePanel(false); toast('Baixando do Drive…', 60000);
     const meta = await metaOf(doc.id);
-    const bytes = await (await gfetch(`/drive/v3/files/${doc.id}?alt=media`)).arrayBuffer();
+    const bytes = await (await gfetch(`/drive/v3/files/${doc.id}?alt=media&supportsAllDrives=true`)).arrayBuffer();
     saveSession();
-    await openFile(new File([bytes], meta.name, { type:'application/pdf' }), { id:meta.id, name:meta.name, version:meta.version });
+    await openFile(new File([bytes], meta.name, { type:'application/pdf' }), { id:meta.id, name:meta.name, version:meta.version, ...(meta.capabilities?.canEdit === false ? { readOnly:true } : {}) });
+    if (meta.capabilities?.canEdit === false) toast('Esse arquivo é só leitura pra você no Drive — ao salvar, vai uma cópia anotada pra pasta Grimório', 5000);
   } catch (e){ console.error(e); toast('Não abri do Drive: ' + e.message); }
 }
 async function driveFolder(){
@@ -2032,7 +2036,9 @@ async function driveSave(){
     await tokP;
     const { out, n } = await buildPdf();
     const name = /\.pdf$/i.test(S.fileName) ? S.fileName : S.fileName + '.pdf';
-    let res = null, f = S.driveFile;
+    let res = null, f = S.driveFile, note = '';
+    const copyName = name.replace(/\.pdf$/i, ' (anotado).pdf');
+    if (f?.readOnly){ res = await driveCreate(copyName, out); note = ' · cópia na pasta Grimório (o original é só leitura)'; f = null; }
     if (f){
       let meta = null;
       try { meta = await metaOf(f.id); } catch (e){ if (e.status !== 404) throw e; }
@@ -2040,12 +2046,18 @@ async function driveSave(){
       else if (meta.version !== f.version && !confirm('Esse arquivo mudou no Drive depois que você abriu (talvez em outro aparelho).\n\nOK = substituir pelo que está aqui\nCancelar = salvar como cópia')){
         res = await driveCreate(name.replace(/\.pdf$/i, ' (cópia).pdf'), out);
       }
-      if (f && !res) res = await (await gfetch(`/upload/drive/v3/files/${f.id}?uploadType=media&fields=id,name,version`, { method:'PATCH', headers:{ 'Content-Type':'application/pdf' }, body:out })).json();
+      if (f && !res){
+        try { res = await (await gfetch(`/upload/drive/v3/files/${f.id}?uploadType=media&fields=id,name,version&supportsAllDrives=true`, { method:'PATCH', headers:{ 'Content-Type':'application/pdf' }, body:out })).json(); }
+        catch (e){
+          if (e.status !== 403 || /rateLimit|quota/i.test(e.why)) throw e;
+          res = await driveCreate(copyName, out); note = ' · cópia na pasta Grimório (sem permissão pra editar o original)';
+        }
+      }
     }
     if (!res) res = await driveCreate(name, out);
     S.driveFile = { id:res.id, name:res.name, version:res.version };
     S.dirty = false; refreshButtons(); renderDrivePanel(); saveSession();
-    toast(`Salvo no Drive ✦ ${savedMsg(n)}`);
+    toast(`Salvo no Drive ✦ ${savedMsg(n)}${note}`, note ? 5000 : 2600);
   } catch (e){ console.error(e); toast('Não salvei no Drive: ' + e.message); }
   saving = false;
 }
