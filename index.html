@@ -138,14 +138,15 @@ button{font:inherit;color:inherit}
 #nbModal{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px;overscroll-behavior:contain;
   background:rgba(15,10,26,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:pmFade .18s ease-out}
 #nbModal[hidden]{display:none}
-.nb-card{width:min(400px,100%)}
+.nb-card{width:min(430px,100%)}
 .nb-lbl{font-size:12px;color:var(--muted);margin:12px 2px 6px;letter-spacing:.02em}
 #nbName{width:100%;box-sizing:border-box;padding:9px 12px;border-radius:12px;border:1px solid var(--bar-line);background:rgba(0,0,0,.25);color:var(--text);font:inherit;font-size:16px}
-.nb-papers{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.nb-paper{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px 6px;border-radius:14px;border:1.5px solid transparent;background:rgba(139,92,246,.10);color:var(--text);font:inherit;font-size:12px;cursor:pointer}
+.nb-papers{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:5px}
+.nb-paper{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 3px 6px;min-width:0;overflow:hidden;border-radius:14px;border:1.5px solid transparent;background:rgba(139,92,246,.10);color:var(--text);font:inherit;font-size:10.5px;cursor:pointer}
 .nb-paper svg{width:100%;max-width:58px;aspect-ratio:3/4;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.35)}
 .nb-paper.on,.nb-seg button.on{border-color:var(--lilac);background:rgba(139,92,246,.28)}
 .nb-seg{display:flex;gap:6px;flex-wrap:wrap}
+.nb-seg[hidden],.nb-lbl[hidden]{display:none}
 .nb-seg button{flex:1;min-width:0;padding:7px 6px;border-radius:12px;border:1.5px solid transparent;background:rgba(139,92,246,.10);color:var(--text);font:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
 .nb-covers{display:flex;gap:8px;flex-wrap:wrap}
 .nb-cov{width:34px;height:44px;padding:0;border-radius:3px 7px 7px 3px;border:0;cursor:pointer;position:relative;box-shadow:0 2px 5px rgba(0,0,0,.4);background:var(--cv)}
@@ -435,7 +436,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <div id="recent" hidden><div class="rc-title">Continuar de onde parou</div><ul></ul></div>
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
-      <p class="fine ver">versão 2026.10.31-010149-beta</p>
+      <p class="fine ver">versão 2026.10.31-010755-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -1034,7 +1035,7 @@ async function loadDoc({ id, base, marks, editable, name, restored, view, drive,
 }
 
 /* ---------- cadernos: PDF em branco com pauta ---------- */
-const PAPERS = { ruled:'Pautado', dots:'Pontilhado', grid:'Quadriculado', blank:'Liso' };
+const PAPERS = { ruled:'Pautado', dots:'Pontilhado', grid:'Quadriculado', blank:'Liso', parchment:'Pergaminho' };
 const PAPER_TONES = { white:['Branco', '#ffffff', '#c9cfdc'], cream:['Creme', '#fbf6e9', '#d8cdb2'], lilac:['Lilás', '#f6f1ff', '#d3c6f0'] };
 const PAPER_SIZES = { a5:['A5', 419.53, 595.28], a4:['A4', 595.28, 841.89], letter:['Carta', 612, 792] };
 const MM = 72 / 25.4;
@@ -1047,6 +1048,7 @@ function parsePaper(t){
 function paperOps(pp){
   const [, w, h] = PAPER_SIZES[pp.size], [, bg, line] = PAPER_TONES[pp.tone], f = v => +v.toFixed(2);
   const rgb = hex => hexToRgb(hex).map(v => +v.toFixed(3)).join(' ');
+  if (pp.kind === 'parchment') return `q 0.925 0.85 0.68 rg 0 0 ${f(w)} ${f(h)} re f Q\n`;
   let o = pp.tone !== 'white' ? `q ${rgb(bg)} rg 0 0 ${f(w)} ${f(h)} re f Q\n` : '';
   const m = (pp.size === 'a5' ? 10 : 13) * MM;
   if (pp.kind === 'ruled'){
@@ -1072,12 +1074,57 @@ function paperOps(pp){
   }
   return o;
 }
+// textura de pergaminho: bordas escurecidas, manchas e fibras (cada página sorteia as suas)
+function parchmentOps(w, h, seed){
+  let a = seed >>> 0;
+  const rnd = () => { a = (a + 0x6D2B79F5) >>> 0; let t = a; t = Math.imul(t ^ t >>> 15, t | 1); t ^= t + Math.imul(t ^ t >>> 7, t | 61); return ((t ^ t >>> 14) >>> 0) / 4294967296; };
+  const f = v => +v.toFixed(1), K = .5523;
+  const ell = (cx, cy, rx, ry) => `${f(cx + rx)} ${f(cy)} m ${f(cx + rx)} ${f(cy + ry * K)} ${f(cx + rx * K)} ${f(cy + ry)} ${f(cx)} ${f(cy + ry)} c `
+    + `${f(cx - rx * K)} ${f(cy + ry)} ${f(cx - rx)} ${f(cy + ry * K)} ${f(cx - rx)} ${f(cy)} c ${f(cx - rx)} ${f(cy - ry * K)} ${f(cx - rx * K)} ${f(cy - ry)} ${f(cx)} ${f(cy - ry)} c `
+    + `${f(cx + rx * K)} ${f(cy - ry)} ${f(cx + rx)} ${f(cy - ry * K)} ${f(cx + rx)} ${f(cy)} c f\n`;
+  // borda irregular: retângulo da página menos um contorno "roído" (preenchimento par-ímpar)
+  const ragged = (base, vary) => {
+    const pts = [], per = 2 * (w + h), n = 140;
+    let d = base + rnd() * vary;
+    for (let i = 0; i < n; i++){
+      d += (rnd() - .5) * vary * .7; d = Math.max(base * .4, Math.min(base + vary, d));
+      let t = i / n * per, x, y;
+      if (t < w){ x = t; y = d; } else if ((t -= w) < h){ x = w - d; y = t; } else if ((t -= h) < w){ x = w - t; y = h - d; } else { t -= w; x = d; y = h - t; }
+      pts.push(`${f(x)} ${f(y)}`);
+    }
+    return `0 0 ${f(w)} ${f(h)} re ${pts[0]} m ${pts.slice(1).map(q => q + ' l').join(' ')} h f*\n`;
+  };
+  let o = `q /PA2 gs 0.42 0.27 0.1 rg ${ragged(16, 22)}Q\nq /PA4 gs 0.3 0.18 0.06 rg ${ragged(3, 9)}Q\n`;
+  // escurecido orgânico das bordas: várias camadas irregulares bem transparentes
+  const M = Math.min(w, h);
+  o += 'q /PA5 gs 0.5 0.33 0.12 rg\n';
+  for (const k of [.05, .08, .11, .15, .2, .26]) o += ragged(M * k, M * k * .9);
+  o += 'Q\nq /PA5 gs 0.62 0.46 0.24 rg\n';
+  // manchas suaves: elipses concêntricas, cada uma quase invisível
+  for (let i = 0; i < 6; i++){
+    const cx = rnd() * w, cy = rnd() * h, r = 30 + rnd() * 70, e = .6 + rnd() * .6;
+    for (let j = 0; j < 5; j++) o += ell(cx, cy, r * (1 - j * .17), r * e * (1 - j * .17));
+  }
+  o += 'Q\nq /PA2 gs 0.5 0.34 0.16 rg\n';
+  for (let i = 0; i < 4; i++){ const r = 2 + rnd() * 7; o += ell(rnd() * w, rnd() * h, r, r * (.7 + rnd() * .5)); }
+  o += 'Q\nq /PA3 gs 0.45 0.32 0.15 RG 0.4 w 1 J\n';
+  for (let i = 0; i < 40; i++){
+    const x = rnd() * w, y = rnd() * h, l = 6 + rnd() * 22, ang = rnd() * Math.PI, dx = Math.cos(ang) * l, dy = Math.sin(ang) * l, bend = (rnd() - .5) * 8;
+    o += `${f(x)} ${f(y)} m ${f(x + dx / 2 - dy / l * bend)} ${f(y + dy / 2 + dx / l * bend)} ${f(x + dx)} ${f(y + dy)} v S\n`;
+  }
+  return o + 'Q\n';
+}
+const PARCH_GS = { PA1:{ Type:'ExtGState', ca:.045, CA:.045 }, PA2:{ Type:'ExtGState', ca:.1, CA:.1 }, PA3:{ Type:'ExtGState', ca:.12, CA:.12 }, PA4:{ Type:'ExtGState', ca:.55, CA:.55 }, PA5:{ Type:'ExtGState', ca:.035, CA:.035 } };
 // adiciona n páginas de caderno ao documento (o papel é um XObject só, compartilhado)
 function addPaperPages(doc, pp, n){
   const [, w, h] = PAPER_SIZES[pp.size], ctx = doc.context;
-  const xo = ctx.register(ctx.flateStream(paperOps(pp), { Type:'XObject', Subtype:'Form', FormType:1, BBox:[0, 0, w, h], Resources:{} }));
+  const parch = pp.kind === 'parchment', ops = paperOps(pp);
+  const form = body => ctx.register(ctx.flateStream(body, { Type:'XObject', Subtype:'Form', FormType:1, BBox:[0, 0, w, h], Resources:parch ? { ExtGState:PARCH_GS } : {} }));
+  const shared = parch ? null : form(ops);
   for (let i = 0; i < n; i++){
     const page = doc.addPage([w, h]);
+    // no pergaminho a textura vem antes da pauta, pra pauta ficar por cima
+    const xo = shared || form(ops + parchmentOps(w, h, (Math.random() * 2 ** 32) ^ (doc.getPageCount() * 7919)));
     page.node.setXObject(PDFName.of('GrimPaper'), xo);
     page.node.addContentStream(ctx.register(ctx.flateStream('q /GrimPaper Do Q\n')));
   }
@@ -1150,12 +1197,14 @@ function readPaper(doc){
 const COVER_COLORS = ['#4c1d95', '#1e1b4b', '#17131f', '#6b1d2f', '#1f3d2b', '#0f3b4c', '#c4b5fd', '#f9a8d4', '#efe4cc'];
 const NB = (() => { try { return { kind:'ruled', size:'a5', tone:'cream', n:10, cover:'#4c1d95', ...JSON.parse(localStorage.getItem('grimorio.nb') || '{}') }; } catch { return { kind:'ruled', size:'a5', tone:'cream', n:10, cover:'#4c1d95' }; } })();
 function paperThumb(kind, tone){
-  const [, bg, line] = PAPER_TONES[tone];
+  let [, bg, line] = PAPER_TONES[tone];
   let g = '';
   if (kind === 'ruled') for (let y = 14; y < 78; y += 7) g += `<path d="M6 ${y}h48" stroke="${line}" stroke-width="1.1"/>`;
   if (kind === 'grid'){ for (let x = 6; x <= 54; x += 6) g += `<path d="M${x} 6v68" stroke="${line}" stroke-width=".7"/>`; for (let y = 6; y <= 78; y += 6) g += `<path d="M6 ${y}h48" stroke="${line}" stroke-width=".7"/>`; }
   if (kind === 'dots') for (let y = 8; y < 78; y += 6) for (let x = 8; x < 56; x += 6) g += `<circle cx="${x}" cy="${y}" r=".9" fill="${line}"/>`;
-  return `<svg viewBox="0 0 60 80"><rect width="60" height="80" fill="${bg}"/>${g}</svg>`;
+  if (kind === 'parchment') bg = '#ecd9ad';
+  const tex = kind === 'parchment' ? '<defs><radialGradient id="pch" r=".75"><stop offset=".55" stop-color="#8c6633" stop-opacity="0"/><stop offset="1" stop-color="#8c6633" stop-opacity=".5"/></radialGradient></defs><rect width="60" height="80" fill="url(#pch)"/><rect x="1" y="1" width="58" height="78" fill="none" stroke="#5a3a14" stroke-opacity=".55" stroke-width="2" stroke-dasharray="3 1.5 6 2"/><ellipse cx="40" cy="58" rx="9" ry="6" fill="#9a7340" opacity=".12"/>' : '';
+  return `<svg viewBox="0 0 60 80"><rect width="60" height="80" fill="${bg}"/>${tex}${g}</svg>`;
 }
 const lum = hex => { const [r, g, b] = hexToRgb(hex); return .2126 * r + .7152 * g + .0722 * b; };
 function renderNbModal(){
@@ -1164,6 +1213,7 @@ function renderNbModal(){
     + [...COVER_COLORS, ...custom].map(c => `<button class="nb-cov${lum(c) > .55 ? ' light' : ''}${NB.cover === c ? ' on' : ''}" data-k="${c}" style="--cv:${c}" title="${c}"></button>`).join('')
     + '<button class="nb-cov pot" data-k="pot" title="Outra cor (caldeirão)"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>';
   $('#nbPapers').innerHTML = Object.entries(PAPERS).map(([k, nm]) => `<button class="nb-paper${NB.kind === k ? ' on' : ''}" data-k="${k}">${paperThumb(k, NB.tone)}${nm}</button>`).join('');
+  $('#nbTones').hidden = $('#nbTones').previousElementSibling.hidden = NB.kind === 'parchment';
   $('#nbTones').innerHTML = Object.entries(PAPER_TONES).map(([k, [nm, bg]]) => `<button class="${NB.tone === k ? 'on' : ''}" data-k="${k}"><span class="nb-tone" style="background:${bg}"></span>${nm}</button>`).join('');
   $('#nbSizes').innerHTML = Object.entries(PAPER_SIZES).map(([k, [nm]]) => `<button class="${NB.size === k ? 'on' : ''}" data-k="${k}">${nm}</button>`).join('');
   $('#nbCount').innerHTML = [1, 5, 10, 30].map(n => `<button class="${NB.n === n ? 'on' : ''}" data-k="${n}">${n}</button>`).join('');
@@ -1199,8 +1249,8 @@ $('#nbOk').onclick = async () => {
     const pp = { kind:NB.kind, size:NB.size, tone:NB.tone };
     const bytes = await makeNotebook(pp, NB.n, title, NB.cover);
     await loadDoc({ id:fileId(bytes), base:bytes, marks:new Map(), editable:true, name:title + '.pdf', restored:false, drive:null, bookmarks:new Map(), paper:pp });
-    const adj = { ruled:'pautada', dots:'pontilhada', grid:'quadriculada', blank:'lisa' }[pp.kind];
-    toast(`Caderno pronto ✦ ${NB.cover ? 'capa + ' : ''}${NB.n} página${NB.n > 1 ? 's' : ''} ${adj}${NB.n > 1 ? 's' : ''}`);
+    const adj = { ruled:'pautada', dots:'pontilhada', grid:'quadriculada', blank:'lisa' }[pp.kind], pl = NB.n > 1 ? 's' : '';
+    toast(`Caderno pronto ✦ ${NB.cover ? 'capa + ' : ''}${NB.n} página${pl} ${adj ? adj + pl : 'de pergaminho'}`);
   } catch (err){ console.error(err); toast('Não consegui criar o caderno 😕'); }
   refreshButtons();
 };
