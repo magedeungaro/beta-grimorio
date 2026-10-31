@@ -135,6 +135,24 @@ button{font:inherit;color:inherit}
 #potionModal{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px;
   background:rgba(15,10,26,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:pmFade .18s ease-out}
 #potionModal[hidden]{display:none}
+#nbModal{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px;overscroll-behavior:contain;
+  background:rgba(15,10,26,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:pmFade .18s ease-out}
+#nbModal[hidden]{display:none}
+.nb-card{width:min(400px,100%)}
+.nb-lbl{font-size:12px;color:var(--muted);margin:12px 2px 6px;letter-spacing:.02em}
+#nbName{width:100%;box-sizing:border-box;padding:9px 12px;border-radius:12px;border:1px solid var(--bar-line);background:rgba(0,0,0,.25);color:var(--text);font:inherit;font-size:16px}
+.nb-papers{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.nb-paper{display:flex;flex-direction:column;align-items:center;gap:5px;padding:8px 4px 6px;border-radius:14px;border:1.5px solid transparent;background:rgba(139,92,246,.10);color:var(--text);font:inherit;font-size:12px;cursor:pointer}
+.nb-paper svg{width:100%;max-width:58px;aspect-ratio:3/4;border-radius:4px;box-shadow:0 2px 6px rgba(0,0,0,.35)}
+.nb-paper.on,.nb-seg button.on{border-color:var(--lilac);background:rgba(139,92,246,.28)}
+.nb-seg{display:flex;gap:6px;flex-wrap:wrap}
+.nb-seg button{flex:1;min-width:0;padding:7px 6px;border-radius:12px;border:1.5px solid transparent;background:rgba(139,92,246,.10);color:var(--text);font:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.nb-tone{width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
+.nb-row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
+.add-page{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 auto 18px;height:64px;border-radius:14px;border:2px dashed rgba(124,58,237,.45);
+  background:rgba(139,92,246,.10);color:#6d28d9;font-weight:600;font:inherit;font-size:14px;cursor:pointer}
+.add-page:active{background:rgba(139,92,246,.2)}
+.add-page svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2.2;stroke-linecap:round}
 @keyframes pmFade{from{opacity:0}to{opacity:1}}
 .pm-card{width:min(360px,100%);max-height:calc(100dvh - 32px);overflow:auto;background:linear-gradient(180deg,#2a1f45,#1c1530);color:var(--text);
   border:1px solid var(--bar-line);border-radius:24px;padding:18px 18px 16px;box-shadow:0 20px 60px rgba(0,0,0,.45);animation:pmPop .22s cubic-bezier(.2,1.3,.4,1)}
@@ -378,6 +396,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
 <header class="bar">
   <div class="brand"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/></svg><span class="txt">Grimório</span></div>
   <button class="btn" id="btnOpen" title="Abrir PDF"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="txt">Abrir</span></button>
+  <button class="btn icon" id="btnNew" title="Novo caderno"><svg viewBox="0 0 24 24"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z"/><path d="M6 3v18M4 7h4M4 12h4M4 17h4"/><path d="M13 8.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="currentColor" stroke="none"/></svg></button>
   <button class="btn icon" id="btnMarks" title="Marcadores (B)" disabled><svg viewBox="0 0 24 24"><path d="M7 3h10v17.5l-5-3.8-5 3.8z"/><path d="M12 7.3l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z" fill="currentColor" stroke="none"/></svg></button>
   <button class="btn icon" id="btnDrive" title="Bola de cristal: Google Drive" hidden><svg viewBox="0 0 24 24" class="orb"><circle cx="12" cy="9.6" r="6.6"/><path d="M8.3 15.3L6.6 19.6h10.8l-1.7-4.3"/><path d="M4.8 19.6h14.4"/><path d="M8.6 7.4a4.2 4.2 0 0 1 2.6-1.9" opacity=".7"/><path class="spark" d="M13.6 8.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="currentColor" stroke="none"/></svg></button>
   <span class="sep"></span>
@@ -401,12 +420,12 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
     <div class="card">
       <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/></svg>
       <h1>Abra um PDF</h1>
-      <p>Toque em <b>Abrir</b> ou arraste um arquivo pra cá.</p>
-      <div class="card-actions"><button class="btn primary" id="btnOpen2" disabled>Carregando…</button><button class="btn" id="btnDrive2" hidden><svg viewBox="0 0 24 24" class="orb"><circle cx="12" cy="9.6" r="6.6"/><path d="M8.3 15.3L6.6 19.6h10.8l-1.7-4.3"/><path d="M4.8 19.6h14.4"/><path d="M8.6 7.4a4.2 4.2 0 0 1 2.6-1.9" opacity=".7"/><path class="spark" d="M13.6 8.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="currentColor" stroke="none"/></svg>Do Google Drive</button></div>
+      <p>Toque em <b>Abrir</b>, arraste um arquivo pra cá ou comece um caderno em branco.</p>
+      <div class="card-actions"><button class="btn primary" id="btnOpen2" disabled>Carregando…</button><button class="btn" id="btnNew2"><svg viewBox="0 0 24 24"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z"/><path d="M6 3v18M4 7h4M4 12h4M4 17h4"/><path d="M13 8.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="currentColor" stroke="none"/></svg>Novo caderno</button><button class="btn" id="btnDrive2" hidden><svg viewBox="0 0 24 24" class="orb"><circle cx="12" cy="9.6" r="6.6"/><path d="M8.3 15.3L6.6 19.6h10.8l-1.7-4.3"/><path d="M4.8 19.6h14.4"/><path d="M8.6 7.4a4.2 4.2 0 0 1 2.6-1.9" opacity=".7"/><path class="spark" d="M13.6 8.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="currentColor" stroke="none"/></svg>Do Google Drive</button></div>
       <div id="recent" hidden><div class="rc-title">Continuar de onde parou</div><ul></ul></div>
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
-      <p class="fine ver">versão 2026.10.31-003022-beta</p>
+      <p class="fine ver">versão 2026.10.31-005413-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -467,6 +486,23 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
   <div class="nc-head"><span class="nc-dot"></span>✦ Comentário<button class="btn icon" id="ncDel" title="Apagar nota"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg></button></div>
   <textarea id="ncText" placeholder="Escreva seu comentário…"></textarea>
   <div class="nc-row"><button class="btn primary" id="ncOk">Pronto</button></div>
+</div>
+
+<div id="nbModal" hidden>
+  <div class="pm-card nb-card" role="dialog" aria-modal="true" aria-label="Novo caderno">
+    <div class="pm-title">✦ Novo caderno ✦<small>Um PDF em branco pra você escrever e desenhar</small></div>
+    <div class="nb-lbl">Nome</div>
+    <input id="nbName" maxlength="80" autocomplete="off" readonly>
+    <div class="nb-lbl">Papel</div>
+    <div class="nb-papers" id="nbPapers"></div>
+    <div class="nb-lbl">Cor do papel</div>
+    <div class="nb-seg" id="nbTones"></div>
+    <div class="nb-lbl">Tamanho</div>
+    <div class="nb-seg" id="nbSizes"></div>
+    <div class="nb-lbl">Páginas pra começar</div>
+    <div class="nb-seg" id="nbCount"></div>
+    <div class="nb-row"><button class="btn" id="nbCancel">Cancelar</button><button class="btn primary" id="nbOk">Criar caderno</button></div>
+  </div>
 </div>
 
 <div id="potionModal" hidden>
@@ -938,12 +974,12 @@ async function openFile(file, drive = null){
   try {
     const bytes = new Uint8Array(await file.arrayBuffer());
     const id = fileId(bytes);
-    const { base, imported, editable, bookmarks } = await extractMarks(bytes);
+    const { base, imported, editable, bookmarks, paper } = await extractMarks(bytes);
     // mesmo arquivo original de uma sessão anterior? traz as anotações de volta
     const prev = await Store.getSession(id);
     const marks = prev?.marks?.length ? new Map(prev.marks) : imported;
     const bms = prev?.bookmarks ? new Map(prev.bookmarks) : (bookmarks || new Map());
-    await loadDoc({ id, base, marks, editable, name:file.name || 'documento.pdf', restored:!!prev?.marks?.length, view:prev?.view, drive, bookmarks:bms });
+    await loadDoc({ id, base, marks, editable, name:file.name || 'documento.pdf', restored:!!prev?.marks?.length, view:prev?.view, drive, bookmarks:bms, paper });
   } catch (err){
     console.error(err);
     toast(err?.name === 'PasswordException' ? 'Esse PDF tem senha — ainda não sei abrir.' : 'Não consegui abrir esse PDF.');
@@ -955,22 +991,23 @@ async function openSession(id){
   try {
     const sess = await Store.getSession(id), bytes = await Store.getFile(id);
     if (!sess || !bytes) throw new Error('sessão incompleta');
-    await loadDoc({ id, base:bytes, marks:new Map(sess.marks || []), editable:sess.editable !== false, name:sess.name, restored:true, view:sess.view, drive:sess.drive || null, bookmarks:new Map(sess.bookmarks || []) });
+    await loadDoc({ id, base:bytes, marks:new Map(sess.marks || []), editable:sess.editable !== false, name:sess.name, restored:true, view:sess.view, drive:sess.drive || null, bookmarks:new Map(sess.bookmarks || []), paper:parsePaper(sess.paper) });
   } catch (err){
     console.error(err); toast('Não consegui reabrir essa sessão 😕'); renderRecent();
   }
   refreshButtons();
 }
-async function loadDoc({ id, base, marks, editable, name, restored, view, drive, bookmarks }){
+async function loadDoc({ id, base, marks, editable, name, restored, view, drive, bookmarks, paper }){
   const doc = await pdfjsLib.getDocument({ data: base.slice(), enableXfa:false }).promise;
   if (S.doc) S.doc.loadingTask?.destroy?.();
-  S.doc = doc; S.baseBytes = base; S.editable = editable; S.fileName = name; S.sessionId = id; S.driveFile = drive || null;
+  S.doc = doc; S.baseBytes = base; S.editable = editable; S.fileName = name; S.sessionId = id; S.driveFile = drive || null; S.paper = paper || null;
   if (S.driveFile) driveLoad().catch(() => {});
   clearSel(); S.undo = []; S.redo = []; S.dirty = false; S.zoom = view?.zoom || 1;
   closeBmCard(true); bmPanel(false);
   await buildPages(marks);
   for (const [i, bm] of (bookmarks || new Map())) if (S.pages[i]) S.pages[i].bm = bm;
   S.pages.forEach(renderRibbon);
+  placeAddPage();
   loadToc();
   if (view?.frac){ requestAnimationFrame(() => { viewer.scrollTop = view.frac * (viewer.scrollHeight - viewer.clientHeight); scheduleVisible(); }); }
   $('#empty').hidden = true;
@@ -981,6 +1018,149 @@ async function loadDoc({ id, base, marks, editable, name, restored, view, drive,
     : n ? `${n} anotaç${n > 1 ? 'ões' : 'ão'} carregada${n > 1 ? 's' : ''} pra edição` : 'Pronto pra rabiscar ✦');
   await Store.putFile(id, base);   // guarda o PDF pra poder continuar depois
   saveSession();
+}
+
+/* ---------- cadernos: PDF em branco com pauta ---------- */
+const PAPERS = { ruled:'Pautado', dots:'Pontilhado', grid:'Quadriculado', blank:'Liso' };
+const PAPER_TONES = { white:['Branco', '#ffffff', '#c9cfdc'], cream:['Creme', '#fbf6e9', '#d8cdb2'], lilac:['Lilás', '#f6f1ff', '#d3c6f0'] };
+const PAPER_SIZES = { a5:['A5', 419.53, 595.28], a4:['A4', 595.28, 841.89], letter:['Carta', 612, 792] };
+const MM = 72 / 25.4;
+const paperStr = pp => `v1|${pp.kind}|${pp.size}|${pp.tone}`;
+function parsePaper(t){
+  const [v, kind, size, tone] = String(t || '').split('|');
+  return v === 'v1' && PAPERS[kind] && PAPER_SIZES[size] && PAPER_TONES[tone] ? { kind, size, tone } : null;
+}
+// desenho do papel (em pontos do PDF, origem embaixo à esquerda)
+function paperOps(pp){
+  const [, w, h] = PAPER_SIZES[pp.size], [, bg, line] = PAPER_TONES[pp.tone], f = v => +v.toFixed(2);
+  const rgb = hex => hexToRgb(hex).map(v => +v.toFixed(3)).join(' ');
+  let o = pp.tone !== 'white' ? `q ${rgb(bg)} rg 0 0 ${f(w)} ${f(h)} re f Q\n` : '';
+  const m = (pp.size === 'a5' ? 10 : 13) * MM;
+  if (pp.kind === 'ruled'){
+    const ls = (pp.size === 'a5' ? 7 : 8) * MM, top = h - (pp.size === 'a5' ? 20 : 26) * MM;
+    o += `q ${rgb(line)} RG 0.6 w\n`;
+    for (let y = top; y > m; y -= ls) o += `${f(m)} ${f(y)} m ${f(w - m)} ${f(y)} l\n`;
+    o += 'S Q\n';
+  } else if (pp.kind === 'grid' || pp.kind === 'dots'){
+    const g = 5 * MM, nx = Math.floor((w - 2 * m) / g), ny = Math.floor((h - 2 * m) / g);
+    const x0 = (w - nx * g) / 2, y0 = (h - ny * g) / 2;
+    if (pp.kind === 'grid'){
+      o += `q ${rgb(line)} RG 0.35 w\n`;
+      for (let i = 0; i <= nx; i++) o += `${f(x0 + i * g)} ${f(y0)} m ${f(x0 + i * g)} ${f(y0 + ny * g)} l\n`;
+      for (let j = 0; j <= ny; j++) o += `${f(x0)} ${f(y0 + j * g)} m ${f(x0 + nx * g)} ${f(y0 + j * g)} l\n`;
+      o += 'S Q\n';
+    } else {
+      // pontinhos: traço de comprimento zero com ponta redonda
+      const dot = hexToRgb(line).map(v => +(v * .82).toFixed(3)).join(' ');
+      o += `q ${dot} RG 1.3 w 1 J\n`;
+      for (let j = 0; j <= ny; j++){ const y = f(y0 + j * g); for (let i = 0; i <= nx; i++){ const x = f(x0 + i * g); o += `${x} ${y} m ${x} ${y} l `; } o += 'S\n'; }
+      o += 'Q\n';
+    }
+  }
+  return o;
+}
+// adiciona n páginas de caderno ao documento (o papel é um XObject só, compartilhado)
+function addPaperPages(doc, pp, n){
+  const [, w, h] = PAPER_SIZES[pp.size], ctx = doc.context;
+  const xo = ctx.register(ctx.flateStream(paperOps(pp), { Type:'XObject', Subtype:'Form', FormType:1, BBox:[0, 0, w, h], Resources:{} }));
+  for (let i = 0; i < n; i++){
+    const page = doc.addPage([w, h]);
+    page.node.setXObject(PDFName.of('GrimPaper'), xo);
+    page.node.addContentStream(ctx.register(ctx.flateStream('q /GrimPaper Do Q\n')));
+  }
+}
+async function makeNotebook(pp, n, title){
+  const doc = await PDFDocument.create();
+  doc.setTitle(title); doc.setCreator('Grimório'); doc.setProducer('Grimório');
+  doc.catalog.set(PDFName.of('GrimorioPaper'), PDFString.of(paperStr(pp)));
+  addPaperPages(doc, pp, n);
+  return doc.save();
+}
+function readPaper(doc){
+  const v = doc.catalog.get(PDFName.of('GrimorioPaper'));
+  try { return parsePaper(v?.decodeText ? v.decodeText() : null); } catch { return null; }
+}
+
+const NB = (() => { try { return { kind:'ruled', size:'a5', tone:'cream', n:10, ...JSON.parse(localStorage.getItem('grimorio.nb') || '{}') }; } catch { return { kind:'ruled', size:'a5', tone:'cream', n:10 }; } })();
+function paperThumb(kind, tone){
+  const [, bg, line] = PAPER_TONES[tone];
+  let g = '';
+  if (kind === 'ruled') for (let y = 14; y < 78; y += 7) g += `<path d="M6 ${y}h48" stroke="${line}" stroke-width="1.1"/>`;
+  if (kind === 'grid'){ for (let x = 6; x <= 54; x += 6) g += `<path d="M${x} 6v68" stroke="${line}" stroke-width=".7"/>`; for (let y = 6; y <= 78; y += 6) g += `<path d="M6 ${y}h48" stroke="${line}" stroke-width=".7"/>`; }
+  if (kind === 'dots') for (let y = 8; y < 78; y += 6) for (let x = 8; x < 56; x += 6) g += `<circle cx="${x}" cy="${y}" r=".9" fill="${line}"/>`;
+  return `<svg viewBox="0 0 60 80"><rect width="60" height="80" fill="${bg}"/>${g}</svg>`;
+}
+function renderNbModal(){
+  $('#nbPapers').innerHTML = Object.entries(PAPERS).map(([k, nm]) => `<button class="nb-paper${NB.kind === k ? ' on' : ''}" data-k="${k}">${paperThumb(k, NB.tone)}${nm}</button>`).join('');
+  $('#nbTones').innerHTML = Object.entries(PAPER_TONES).map(([k, [nm, bg]]) => `<button class="${NB.tone === k ? 'on' : ''}" data-k="${k}"><span class="nb-tone" style="background:${bg}"></span>${nm}</button>`).join('');
+  $('#nbSizes').innerHTML = Object.entries(PAPER_SIZES).map(([k, [nm]]) => `<button class="${NB.size === k ? 'on' : ''}" data-k="${k}">${nm}</button>`).join('');
+  $('#nbCount').innerHTML = [1, 5, 10, 30].map(n => `<button class="${NB.n === n ? 'on' : ''}" data-k="${n}">${n}</button>`).join('');
+}
+function nbModal(open){
+  $('#nbModal').hidden = !open;
+  if (!open) return;
+  openDrawer(false); drivePanel?.(false);
+  const d = new Date();
+  $('#nbName').value = `Caderno ${String(d.getDate()).padStart(2, '0')}-${String(d.getMonth() + 1).padStart(2, '0')}-${d.getFullYear()}`;
+  $('#nbName').readOnly = true;   // só vira campo editável quando tocado (o Scribble não pula nele)
+  renderNbModal();
+}
+$('#btnNew').onclick = $('#btnNew2').onclick = () => { if (editing) finishEdit(); nbModal(true); };
+$('#nbName').addEventListener('click', e => { if (e.target.readOnly){ e.target.readOnly = false; e.target.focus(); e.target.select(); } });
+$('#nbPapers').onclick = e => { const b = e.target.closest('button'); if (b){ NB.kind = b.dataset.k; renderNbModal(); } };
+$('#nbTones').onclick = e => { const b = e.target.closest('button'); if (b){ NB.tone = b.dataset.k; renderNbModal(); } };
+$('#nbSizes').onclick = e => { const b = e.target.closest('button'); if (b){ NB.size = b.dataset.k; renderNbModal(); } };
+$('#nbCount').onclick = e => { const b = e.target.closest('button'); if (b){ NB.n = +b.dataset.k; renderNbModal(); } };
+$('#nbCancel').onclick = () => nbModal(false);
+$('#nbModal').addEventListener('pointerdown', e => { if (e.target.id === 'nbModal') nbModal(false); });
+$('#nbOk').onclick = async () => {
+  const title = ($('#nbName').value.trim() || 'Caderno').replace(/[\\/:*?"<>|]+/g, '-').slice(0, 80);
+  try { localStorage.setItem('grimorio.nb', JSON.stringify(NB)); } catch {}
+  nbModal(false); saveSession();
+  toast('Costurando o caderno…', 60000);
+  try {
+    const pp = { kind:NB.kind, size:NB.size, tone:NB.tone };
+    const bytes = await makeNotebook(pp, NB.n, title);
+    await loadDoc({ id:fileId(bytes), base:bytes, marks:new Map(), editable:true, name:title + '.pdf', restored:false, drive:null, bookmarks:new Map(), paper:pp });
+    const adj = { ruled:'pautada', dots:'pontilhada', grid:'quadriculada', blank:'lisa' }[pp.kind];
+    toast(`Caderno pronto ✦ ${NB.n} página${NB.n > 1 ? 's' : ''} ${adj}${NB.n > 1 ? 's' : ''}`);
+  } catch (err){ console.error(err); toast('Não consegui criar o caderno 😕'); }
+  refreshButtons();
+};
+// "+ Nova página" no fim do caderno
+const addPageBtn = document.createElement('button');
+addPageBtn.className = 'add-page'; addPageBtn.innerHTML = '<svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>Nova página';
+addPageBtn.onclick = () => appendPages(1);
+function placeAddPage(){
+  if (S.paper && S.editable){
+    pagesEl.appendChild(addPageBtn);
+    const last = S.pages[S.pages.length - 1];
+    addPageBtn.style.width = last ? last.el.style.width : '';
+  } else addPageBtn.remove();
+}
+let appending = false;
+async function appendPages(n){
+  if (!S.paper || appending) return;
+  if (editing) finishEdit();
+  appending = true;
+  try {
+    const doc = await PDFDocument.load(S.baseBytes, { updateMetadata:false });
+    addPaperPages(doc, S.paper, n);
+    const base = await doc.save();
+    const pdf = await pdfjsLib.getDocument({ data:base.slice(), enableXfa:false }).promise;
+    const old = S.doc;
+    for (const pg of S.pages){ if (pg.task){ pg.task.cancel(); pg.task = null; } pg.pdfPage = await pdf.getPage(pg.i); }
+    S.doc = pdf; S.baseBytes = base;
+    old?.loadingTask?.destroy?.();
+    const first = S.pages.length + 1;
+    for (let i = first; i <= pdf.numPages; i++){ const pg = makePage(i, await pdf.getPage(i), []); groupPage(pg); }
+    layout(); placeAddPage(); scheduleVisible();
+    S.pages[first - 1].el.scrollIntoView({ behavior:'smooth', block:'start' });
+    S.dirty = true; refreshButtons();
+    await Store.setFile(S.sessionId, base); saveSession();
+    toast(n > 1 ? `+${n} páginas ✦` : 'Página nova ✦');
+  } catch (err){ console.error(err); toast('Não consegui adicionar a página 😕'); }
+  appending = false;
 }
 
 /* ---------- sessões: tudo fica no aparelho (IndexedDB) ---------- */
@@ -1010,6 +1190,7 @@ const Store = (() => {
     list: safe(async () => ((await tx('sessions', 'readonly', st => st.getAll())) || []).sort((a, b) => b.updated - a.updated)),
     getFile: safe(id => tx('files', 'readonly', st => st.get(id))),
     putFile: safe(async (id, bytes) => { if (!(await tx('files', 'readonly', st => st.getKey(id)))) await tx('files', 'readwrite', st => st.put(bytes, id)); }),
+    setFile: safe((id, bytes) => tx('files', 'readwrite', st => st.put(bytes, id))),
     remove: safe(async id => { await tx('sessions', 'readwrite', st => st.delete(id)); await tx('files', 'readwrite', st => st.delete(id)); }),
   };
 })();
@@ -1023,7 +1204,7 @@ async function saveSession(){
   S.pages.forEach((pg, i) => { if (pg.strokes.length) marks.push([i, pg.strokes.map(m => Object.fromEntries(Object.entries(m).filter(([k]) => k[0] !== '_')))]); });
   const frac = viewer.scrollHeight > viewer.clientHeight ? viewer.scrollTop / (viewer.scrollHeight - viewer.clientHeight) : 0;
   await Store.putSession({ id:S.sessionId, name:S.fileName, pages:S.pages.length, editable:S.editable,
-    count:marks.reduce((a, [, m]) => a + m.length, 0), marks, bookmarks:S.pages.filter(q => q.bm).map(q => [q.i - 1, q.bm]), updated:Date.now(), drive:S.driveFile || null, view:{ zoom:S.zoom, frac } });
+    count:marks.reduce((a, [, m]) => a + m.length, 0), marks, bookmarks:S.pages.filter(q => q.bm).map(q => [q.i - 1, q.bm]), updated:Date.now(), drive:S.driveFile || null, paper:S.paper ? paperStr(S.paper) : null, view:{ zoom:S.zoom, frac } });
   // poda as mais antigas
   const all = await Store.list();
   if (all && all.length > MAX_SESSIONS) for (const old of all.slice(MAX_SESSIONS)) await Store.remove(old.id);
@@ -1059,6 +1240,7 @@ renderRecent();
 /* Tira /Ink e /Highlight do arquivo (viram marcações editáveis) e devolve o PDF "limpo". */
 async function extractMarks(bytes){
   const imported = new Map(), bookmarks = new Map();
+  let paper = null;
   try {
     const doc = await PDFDocument.load(bytes, { updateMetadata:false });
     if (doc.isEncrypted) return { base: bytes, imported, editable:false };
@@ -1086,7 +1268,8 @@ async function extractMarks(bytes){
       if (marks.length){ imported.set(i, marks); page.node.set(PDFName.of('Annots'), doc.context.obj(keep)); changed = true; }
     });
     if (takeBookmarks(doc, bookmarks)) changed = true;
-    return { base: changed ? await doc.save() : bytes, imported, editable:true, bookmarks };
+    paper = readPaper(doc);
+    return { base: changed ? await doc.save() : bytes, imported, editable:true, bookmarks, paper };
   } catch (e){
     console.warn('pdf-lib não leu o arquivo; só leitura', e);
     return { base: bytes, imported, editable:false };
@@ -1184,19 +1367,22 @@ async function buildPages(imported){
   let maxW = 0;
   for (let i = 1; i <= S.doc.numPages; i++){
     const pdfPage = await S.doc.getPage(i);
-    const v1 = pdfPage.getViewport({ scale:1 });
-    maxW = Math.max(maxW, v1.width);
-    const el = document.createElement('div'); el.className = 'page';
-    const n = document.createElement('span'); n.className = 'num'; n.textContent = i; el.appendChild(n);
-    pagesEl.appendChild(el);
-    const pg = { i, pdfPage, el, vp:null, pdfCanvas:null, inkCanvas:null, strokes: imported.get(i - 1) || [], gen:0, shown:-1, task:null, text:null, textP:null, bm:null };
-    const rib = document.createElement('button'); rib.className = 'bm-rib'; rib.innerHTML = RIBBON_SVG;
-    rib.onclick = ev => { ev.stopPropagation(); ribbonTap(pg); }; el.appendChild(rib); pg.rib = rib;
-    el._pg = pg; S.pages.push(pg);
+    maxW = Math.max(maxW, pdfPage.getViewport({ scale:1 }).width);
+    makePage(i, pdfPage, imported.get(i - 1) || []);
   }
   for (const pg of S.pages) groupPage(pg);
   S.maxW = maxW;
   computeFit(); layout(); viewer.scrollTop = 0; viewer.scrollLeft = 0; scheduleVisible();
+}
+function makePage(i, pdfPage, strokes){
+  const el = document.createElement('div'); el.className = 'page';
+  const n = document.createElement('span'); n.className = 'num'; n.textContent = i; el.appendChild(n);
+  pagesEl.insertBefore(el, addPageBtn.parentNode === pagesEl ? addPageBtn : null);
+  const pg = { i, pdfPage, el, vp:null, pdfCanvas:null, inkCanvas:null, strokes, gen:0, shown:-1, task:null, text:null, textP:null, bm:null };
+  const rib = document.createElement('button'); rib.className = 'bm-rib'; rib.innerHTML = RIBBON_SVG;
+  rib.onclick = ev => { ev.stopPropagation(); ribbonTap(pg); }; el.appendChild(rib); pg.rib = rib;
+  el._pg = pg; S.pages.push(pg);
+  return pg;
 }
 function computeFit(){ S.fit = Math.min(viewer.clientWidth - 32, 1100) / S.maxW; }
 const scale = () => S.fit * S.zoom;
@@ -1211,6 +1397,7 @@ function layout(){
     if (pg.task){ pg.task.cancel(); pg.task = null; }
     renderOverlays(pg);
   }
+  if (addPageBtn.parentNode) addPageBtn.style.width = S.pages.length ? S.pages[S.pages.length - 1].el.style.width : '';
   refreshButtons();
 }
 
@@ -2439,7 +2626,7 @@ function fling(){
 
 viewer.addEventListener('pointerdown', e => {
   if (!S.doc) return;
-  if (e.target.closest('.bm-rib')) return;   // fita de marca-página
+  if (e.target.closest('.bm-rib,.add-page')) return;   // fita de marca-página / nova página
   if (e.target.closest('.sel-bar')) return;   // botões da seleção
   if (sel && !active && e.target.closest('.sel-box') && !(e.pointerType === 'mouse' && e.button !== 0)){
     if (e.pointerType === 'pen') lastPenAt = performance.now();
@@ -2565,6 +2752,7 @@ $('#btnUndo').onclick = undo; $('#btnRedo').onclick = redo;
 addEventListener('keydown', e => {
   const mod = e.metaKey || e.ctrlKey, k = (e.key || '').toLowerCase();
   if (!k || e.isComposing) return;   // o iPad (Rabiscar, ditado) manda eventos de teclado sem tecla
+  if (!$('#nbModal').hidden){ if (k === 'escape'){ e.preventDefault(); nbModal(false); } return; }
   if (!$('#potionModal').hidden && (k === 'escape' || (k === 'enter' && !mod))){ e.preventDefault(); closePotion(); return; }
   if (editing && k === 'escape'){ e.preventDefault(); finishEdit(); return; }
   if (editing && !mod) return;   // escrevendo: letras não trocam de ferramenta
