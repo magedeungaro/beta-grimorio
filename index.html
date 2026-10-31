@@ -211,6 +211,12 @@ button{font:inherit;color:inherit}
 .sel-box{position:absolute;border:1.5px dashed #7c3aed;background:rgba(139,92,246,.07);border-radius:4px;pointer-events:auto;cursor:move;touch-action:none;box-shadow:0 0 0 1px rgba(255,255,255,.6)}
 .sel-bar{position:absolute;left:50%;top:-44px;transform:translateX(-50%);display:flex;gap:4px;padding:4px;border-radius:12px;background:#211836;box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:auto}
 .sel-bar.below{top:auto;bottom:-44px}
+.sel-rot{position:absolute;left:50%;bottom:-40px;width:26px;height:26px;margin-left:-13px;border-radius:50%;background:#fff;border:2px solid #7c3aed;
+  box-shadow:0 1px 3px rgba(0,0,0,.3);cursor:grab;touch-action:none;display:flex;align-items:center;justify-content:center;color:#7c3aed}
+.sel-rot::before{content:"";position:absolute;left:50%;top:-15px;width:1.5px;height:13px;background:#7c3aed;margin-left:-.75px}
+.sel-rot::after{content:"";position:absolute;inset:-12px}
+.sel-rot svg{width:14px;height:14px;fill:none;stroke:currentColor;stroke-width:2.4;stroke-linecap:round;stroke-linejoin:round}
+.sel-bar.below{bottom:-92px}
 .sel-h{position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #7c3aed;box-shadow:0 1px 3px rgba(0,0,0,.3);touch-action:none}
 .sel-h::after{content:"";position:absolute;inset:-12px}
 .sel-h.tl{left:-9px;top:-9px;cursor:nwse-resize}.sel-h.br{right:-9px;bottom:-9px;cursor:nwse-resize}
@@ -396,7 +402,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <div id="recent" hidden><div class="rc-title">Continuar de onde parou</div><ul></ul></div>
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
-      <p class="fine ver">versão 2026.10.31-000549-beta</p>
+      <p class="fine ver">versão 2026.10.31-000948-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -1679,12 +1685,12 @@ const STAMPS = [
     { d:'M45 71 L55 71 L55 80 L45 80 Z', stroke:2.8, c:'#facc15' },
     { d:star4D(36, 50, 4), fill:true, c:'#facc15' }, { d:star4D(52, 42, 3), fill:true, c:'#facc15' } ] },
   { id:'candle', cat:'Místicos', fixed:true, name:'Vela', parts:[
-    { d:'M50 6 C59 17 63 24 59 32 C56 38 44 38 41 32 C37 24 41 17 50 6 Z', fill:true, c:'#f97316' },
-    { d:'M50 15 C55 22 56 27 54 30.5 C52.5 33.5 47.5 33.5 46 30.5 C44 27 45 22 50 15 Z', fill:true, c:'#fde047' },
+    { d:'M50 4 C60 16 64 24 60 32 C57 39 43 39 40 32 C36 24 40 16 50 4 Z', fill:true, c:'#c084fc' },
+    { d:'M50 14 C55 21 56.5 26.5 54.5 30.5 C53 33.5 47 33.5 45.5 30.5 C43.5 26.5 45 21 50 14 Z', fill:true, c:'#ede9fe' },
     { d:'M50 35 L50 41', stroke:3, c:'#1d1630' },
-    { d:'M37 41 L63 41 L63 90 L37 90 Z', fill:true, c:'#7c3aed' },
-    { d:'M37 41 C40 46 43 46 44 52 C45 56 48 56 48 50 C48 46 52 45 54 49 L54 44 C57 46 60 45 63 41 Z', fill:true, c:'#a78bfa' },
-    { d:'M42 55 L45 55 L45 84 L42 84 Z', fill:true, c:'#c4b5fd' },
+    { d:'M37 41 L63 41 L63 90 L37 90 Z', fill:true, c:'#1d1630' },
+    { d:'M37 41 C40 46 43 46 44 52 C45 56 48 56 48 50 C48 46 52 45 54 49 L54 44 C57 46 60 45 63 41 Z', fill:true, c:'#3b3355' },
+    { d:'M42 55 L45 55 L45 84 L42 84 Z', fill:true, c:'#4c4470' },
     { d:ellipseD(50, 91, 23, 5.5), fill:true, c:'#ca8a04' },
     { d:'M30 91 C36 88 64 88 70 91', stroke:1.8, c:'#fde68a' } ] },
   { id:'orb', cat:'Místicos', fixed:true, name:'Bola de cristal', parts:[
@@ -1744,7 +1750,9 @@ function drawStamp(ctx, pg, st){
   const def = STAMP[st.id]; if (!def) return;
   const [vx, vy] = pg.vp.convertToViewportPoint(st.at[0], st.at[1]), k = st.size * pg.vp.scale / 100, d = pg.dpr;
   ctx.save();
-  ctx.setTransform(d * k, 0, 0, d * k, d * (vx - 50 * k), d * (vy - 50 * k));
+  ctx.setTransform(d, 0, 0, d, 0, 0); ctx.translate(vx, vy);
+  if (st.rot) ctx.rotate(-st.rot);   // ângulo no espaço do PDF (anti-horário); na tela o y é invertido
+  ctx.scale(k, k); ctx.translate(-50, -50);
   ctx.lineCap = 'round'; ctx.lineJoin = 'round';
   for (const part of def.parts){
     const pth = path2d(part.d), col = part.c || (part.paper ? '#ffffff' : st.color);
@@ -1784,10 +1792,12 @@ function pathToPdf(d){
 }
 function addStamp(doc, page, st, idx){
   const def = STAMP[st.id]; if (!def) return;
-  const ctx = doc.context, h = st.size / 2, [x, y] = st.at, k = st.size / 100;
+  const ctx = doc.context, [x, y] = st.at, k = st.size / 100, rot = st.rot || 0, cs = Math.cos(rot), sn = Math.sin(rot);
+  const h = st.size / 2 * (Math.abs(cs) + Math.abs(sn));
   const rect = [x - h, y - h, x + h, y + h].map(v => +f2(v));
   const [r, g, b] = hexToRgb(st.color).map(f2);
-  let body = `q 1 J 1 j ${f2(k)} 0 0 ${f2(-k)} ${f2(x - h)} ${f2(y + h)} cm\n`;
+  const m = [cs * k, sn * k, sn * k, -cs * k, x - 50 * k * (cs + sn), y + 50 * k * (cs - sn)].map(v => (Math.round(v * 1e4) / 1e4).toString());
+  let body = `q 1 J 1 j ${m.join(' ')} cm\n`;
   for (const part of def.parts){
     const c = part.c ? hexToRgb(part.c).map(f2).join(' ') : part.paper ? '1 1 1' : `${r} ${g} ${b}`;
     body += `${c} rg ${c} RG ${part.stroke ? part.stroke + ' w ' : ''}${pathToPdf(part.d)} ${part.fill && part.stroke ? 'B' : part.fill ? 'f' : 'S'}\n`;
@@ -1796,13 +1806,14 @@ function addStamp(doc, page, st, idx){
   const ap = ctx.register(ctx.flateStream(body, { Type:'XObject', Subtype:'Form', FormType:1, BBox:rect, Resources:{} }));
   page.node.addAnnot(ctx.register(ctx.obj({
     ...commonFields(st, page, idx), Subtype:'Stamp', Rect:rect, Name:'GrimorioCarimbo',
-    Contents:PDFHexString.fromText(def.name), AP:{ N:ap }, GrimorioStamp:PDFString.of(st.id),
+    Contents:PDFHexString.fromText(def.name), AP:{ N:ap }, GrimorioStamp:PDFString.of(st.id), GrimorioSize:+f2(st.size), GrimorioRot:+(rot.toFixed(5)),
   })));
 }
 function stampFromAnnot(doc, d){
   const id = annotText(doc, d, 'GrimorioStamp'); if (!STAMP[id]) return [];
   const R = rectOf(doc, d); if (!R) return [];
-  return [{ kind:'stamp', tool:'stamp', id, color:annotColor(doc, d, '#1d1630'), alpha:1, at:[(R[0] + R[2]) / 2, (R[1] + R[3]) / 2], size:Math.max(6, R[2] - R[0]) }];
+  const size = num(doc, d.get(PDFName.of('GrimorioSize')), R[2] - R[0]), rot = num(doc, d.get(PDFName.of('GrimorioRot')), 0);
+  return [{ kind:'stamp', tool:'stamp', id, color:annotColor(doc, d, '#1d1630'), alpha:1, at:[(R[0] + R[2]) / 2, (R[1] + R[3]) / 2], size:Math.max(6, size), ...(rot ? { rot } : {}) }];
 }
 
 /* ---------- marca-páginas (fita) e sumário ----------
@@ -2040,7 +2051,7 @@ function translateMark(st, dx, dy){
   if (st.at){ st.at = [st.at[0] + dx, st.at[1] + dy]; }
 }
 function markBounds(st){
-  if (st.kind === 'stamp'){ const h = st.size / 2; return [st.at[0] - h, st.at[1] - h, st.at[0] + h, st.at[1] + h]; }
+  if (st.kind === 'stamp'){ const r = st.rot || 0, h = st.size / 2 * (Math.abs(Math.cos(r)) + Math.abs(Math.sin(r))); return [st.at[0] - h, st.at[1] - h, st.at[0] + h, st.at[1] + h]; }
   if (st.kind === 'note') return [st.at[0] - 10, st.at[1] - 10, st.at[0] + 10, st.at[1] + 10];
   if (st.kind === 'box'){ const h = st._h || st.fs * 1.25 + 2 * BOX_PAD; return [st.at[0], st.at[1] - h, st.at[0] + st.w, st.at[1]]; }
   if (st._bb) return st._bb;
@@ -2069,13 +2080,14 @@ function caught(poly, st){
   let n = 0; for (const [x, y] of st.pts) if (inPoly(poly, x, y)) n++;
   return n >= Math.max(1, st.pts.length * .5);   // metade do traço dentro do laço
 }
-const snapMark = st => ({ pts:st.pts?.map(q => [...q]), at:st.at && [...st.at], w:st.w, fs:st.fs, size:st.size });
+const snapMark = st => ({ pts:st.pts?.map(q => [...q]), at:st.at && [...st.at], w:st.w, fs:st.fs, size:st.size, rot:st.rot });
 function restoreMark(st, sn){
   if (sn.pts) st.pts = sn.pts.map(q => [...q]);
   if (sn.at) st.at = [...sn.at];
   if (sn.w != null) st.w = sn.w;
   if (sn.fs != null) st.fs = sn.fs;
   if (sn.size != null) st.size = sn.size;
+  if (st.kind === 'stamp') st.rot = sn.rot || 0;
   delete st._sm; delete st._bb;
 }
 // escala a partir do canto oposto (ax, ay); a espessura e o tamanho da letra acompanham
@@ -2087,6 +2099,11 @@ function scaleFrom(st, sn, ax, ay, k){
 }
 function startSelDrag(e){
   const pg = sel.pg, [x, y] = toPdf(pg, e.clientX, e.clientY), h = e.target.closest('.sel-h');
+  if (e.target.closest('.sel-rot')){
+    const b = selBounds(), cx = (b[0] + b[2]) / 2, cy = (b[1] + b[3]) / 2;
+    active = { kind:'rotate', id:e.pointerId, type:e.pointerType, pg, cx, cy, a0:Math.atan2(y - cy, x - cx), before:sel.items.map(snapMark), ang:0 };
+    return;
+  }
   if (h){
     const b = selBounds(), C = [[b[0], b[1]], [b[2], b[1]], [b[2], b[3]], [b[0], b[3]]];
     const r = h.getBoundingClientRect(), [hx, hy] = toPdf(pg, r.left + r.width / 2, r.top + r.height / 2);
@@ -2094,6 +2111,15 @@ function startSelDrag(e){
     const [ax, ay] = C[(i + 2) % 4];
     active = { kind:'scale', id:e.pointerId, type:e.pointerType, pg, ax, ay, d0:Math.max(1e-3, Math.hypot(x - ax, y - ay)), before:sel.items.map(snapMark), k:1 };
   } else active = { kind:'move', id:e.pointerId, type:e.pointerType, pg, x0:x, y0:y, dx:0, dy:0 };
+}
+function rotateFrom(st, sn, cx, cy, a){
+  const c = Math.cos(a), s2 = Math.sin(a), R = (x, y) => [cx + (x - cx) * c - (y - cy) * s2, cy + (x - cx) * s2 + (y - cy) * c];
+  if (sn.pts){ st.pts = sn.pts.map(([x, y, w]) => [...R(x, y), w]); delete st._sm; delete st._bb; }
+  if (st.kind === 'box' && sn.at){   // caixa: gira o centro, o texto continua na horizontal
+    const h = st._h || st.fs * 1.25 + 2 * BOX_PAD, [mx, my] = R(sn.at[0] + sn.w / 2, sn.at[1] - h / 2);
+    st.at = [mx - sn.w / 2, my + h / 2];
+  } else if (sn.at) st.at = R(sn.at[0], sn.at[1]);
+  if (st.kind === 'stamp') st.rot = ((sn.rot || 0) + a) % (2 * Math.PI);
 }
 function clearSel(){
   if (!sel) return;
@@ -2107,7 +2133,8 @@ function renderSelection(){
   if (!el){
     el = pg.selEl = document.createElement('div'); el.className = 'sel-box';
     el.innerHTML = '<div class="sel-bar"><button data-act="del" title="Apagar seleção"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Apagar</button><button data-act="off" title="Desmarcar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'
-      + '<i class="sel-h tl"></i><i class="sel-h tr"></i><i class="sel-h bl"></i><i class="sel-h br"></i>';
+      + '<i class="sel-h tl"></i><i class="sel-h tr"></i><i class="sel-h bl"></i><i class="sel-h br"></i>'
+      + '<i class="sel-rot" title="Girar"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 1 1-2.3-5.7"/><path d="M20 4v5h-5"/></svg></i>';
     el.querySelector('[data-act=del]').onclick = deleteSel;
     el.querySelector('[data-act=off]').onclick = clearSel;
   }
@@ -2141,6 +2168,15 @@ function startLasso(e, pg){
 }
 function moveLasso(e){
   const a = active, pg = a.pg, [x, y] = toPdf(pg, e.clientX, e.clientY);
+  if (a.kind === 'rotate'){
+    let ang = Math.atan2(y - a.cy, x - a.cx) - a.a0;
+    const step = Math.PI / 4, near = Math.round(ang / step) * step;
+    if (Math.abs(ang - near) < 4 * Math.PI / 180) ang = near;   // gruda em 0°, 45°, 90°…
+    a.ang = ang;
+    sel.items.forEach((st, i) => rotateFrom(st, a.before[i], a.cx, a.cy, ang));
+    if (!a.raf) a.raf = requestAnimationFrame(() => { a.raf = 0; drawInk(pg); renderSelection(); });
+    return;
+  }
   if (a.kind === 'scale'){
     a.k = Math.max(.1, Math.min(10, Math.hypot(x - a.ax, y - a.ay) / a.d0));
     sel.items.forEach((st, i) => scaleFrom(st, a.before[i], a.ax, a.ay, a.k));
@@ -2166,6 +2202,12 @@ function moveLasso(e){
   ctx.setLineDash([5, 4]); ctx.lineWidth = 1.6; ctx.strokeStyle = '#7c3aed'; ctx.stroke(); ctx.setLineDash([]);
 }
 function endLasso(a){
+  if (a.kind === 'rotate'){
+    if (a.raf){ cancelAnimationFrame(a.raf); a.raf = 0; }
+    drawInk(a.pg); renderSelection();
+    if (Math.abs(a.ang) > 1e-4){ S.undo.push({ type:'scale', pg:a.pg, items:[...sel.items], before:a.before, after:sel.items.map(snapMark) }); S.redo = []; S.dirty = true; refreshButtons(); scheduleSave(); }
+    return;
+  }
   if (a.kind === 'scale'){
     if (a.raf){ cancelAnimationFrame(a.raf); a.raf = 0; }
     drawInk(a.pg); renderSelection();
@@ -2266,7 +2308,7 @@ function commit(pg, mark){
 function endStroke(){
   const a = active; active = null;
   if (!a) return;
-  if (a.kind === 'lasso' || a.kind === 'move' || a.kind === 'scale'){ endLasso(a); return; }
+  if (['lasso', 'move', 'scale', 'rotate'].includes(a.kind)){ endLasso(a); return; }
   if (a.kind === 'ov'){
     if (!a.moved){ if (editing?.st !== a.st) beginEdit(a.pg, a.st, false); }
     else if (editing?.st !== a.st){ S.undo.push({ type:'edit', pg:a.pg, stroke:a.st, before:a.before, after:snap(a.st) }); S.redo = []; S.dirty = true; }
@@ -2287,7 +2329,7 @@ function endStroke(){
   }
   refreshButtons(); scheduleSave();
 }
-function cancelStroke(){ if (['erase', 'ov', 'rz', 'lasso', 'move', 'scale'].includes(active?.kind)) return endStroke(); clearLive(); active = null; }
+function cancelStroke(){ if (['erase', 'ov', 'rz', 'lasso', 'move', 'scale', 'rotate'].includes(active?.kind)) return endStroke(); clearLive(); active = null; }
 
 function eraseAt(e){
   const a = active, pg = a.pg, [x, y] = toPdf(pg, e.clientX, e.clientY);
@@ -2312,7 +2354,7 @@ function eraseFrame(a){
   ctx.beginPath(); ctx.arc(vx, vy, TOOLS.eraser.size.val / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 }
 function markHit(st, x, y, rad){
-  if (st.kind === 'stamp'){ const h = st.size / 2 + rad; return Math.abs(x - st.at[0]) <= h && Math.abs(y - st.at[1]) <= h; }
+  if (st.kind === 'stamp'){ const b = markBounds(st); return x >= b[0] - rad && x <= b[2] + rad && y >= b[1] - rad && y <= b[3] + rad; }
   if (st.kind === 'note') return Math.hypot(x - st.at[0], y - st.at[1]) <= rad + 9;
   if (st.kind === 'box'){
     const h = st._h || st.fs * 1.25 + 2 * BOX_PAD;
@@ -2434,7 +2476,7 @@ viewer.addEventListener('pointermove', e => {
   if (!active || active.id !== e.pointerId) return;
   if (e.pointerType === 'pen') lastPenAt = performance.now();
   if (active.kind === 'ov' || active.kind === 'rz') return moveOv(e);
-  if (active.kind === 'lasso' || active.kind === 'move' || active.kind === 'scale') return moveLasso(e);
+  if (['lasso', 'move', 'scale', 'rotate'].includes(active.kind)) return moveLasso(e);
   if (active.kind === 'place'){ if (Math.hypot(e.clientX - active.x, e.clientY - active.y) > 10) active.ok = false; return; }
   const evs = e.getCoalescedEvents?.() || [];
   if (active.kind === 'text') return moveText(e);
