@@ -216,7 +216,8 @@ button{font:inherit;color:inherit}
 .page .num{position:absolute;right:-2px;bottom:-16px;font-size:11px;color:#8a80a8}
 .tool-eraser .page{cursor:cell}
 .tool-text .page{cursor:text}
-.page canvas.ink,.page canvas.live{mix-blend-mode:multiply}
+/* só o que é transparente (marca-texto, grifo) multiplica com o papel; o resto aparece com a cor de verdade, até em capa escura */
+.page canvas.hlink,.page canvas.live.hl{mix-blend-mode:multiply}
 .size[hidden]{display:none}
 .tool-box .page{cursor:text}
 .tool-stamp .page{cursor:copy}
@@ -295,6 +296,11 @@ button{font:inherit;color:inherit}
 @media (prefers-color-scheme:dark){.card{background:rgba(45,33,72,.55);color:var(--text);border-color:#5b4a8a}}
 .card h1{margin:6px 0 6px;font-size:22px}
 .card p{margin:0 0 18px;opacity:.8}
+.card .or{display:flex;align-items:center;gap:12px;margin:18px 0 14px;color:#7a6aa8;font-size:12px;letter-spacing:.12em;text-transform:uppercase}
+.card .or::before,.card .or::after{content:"";flex:1;height:1px;background:linear-gradient(90deg,transparent,#b7a6e6,transparent)}
+.btn.materialize{margin:0 auto;padding:10px 18px;border-radius:14px;border:1.5px solid #8b5cf6;background:rgba(139,92,246,.12);color:#5b21b6;font-weight:600}
+.btn.materialize:hover{background:rgba(139,92,246,.22)}
+.btn.materialize svg{width:18px;height:18px}
 .card .fine{margin:16px 0 0;font-size:12.5px;opacity:.65}
 .card .star{width:40px;height:40px;color:var(--accent)}
 body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
@@ -407,7 +413,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
 <header class="bar">
   <div class="brand"><svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/></svg><span class="txt">Grimório</span></div>
   <button class="btn" id="btnOpen" title="Abrir PDF"><svg viewBox="0 0 24 24"><path d="M3 7a2 2 0 0 1 2-2h4l2 2h8a2 2 0 0 1 2 2v8a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/></svg><span class="txt">Abrir</span></button>
-  <button class="btn icon" id="btnNew" title="Novo caderno"><svg viewBox="0 0 24 24"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z"/><path d="M6 3v18M4 7h4M4 12h4M4 17h4"/><path d="M13 8.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="currentColor" stroke="none"/></svg></button>
+  <button class="btn icon" id="btnNew" title="Materialize um caderno"><svg viewBox="0 0 24 24"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z"/><path d="M6 3v18M4 7h4M4 12h4M4 17h4"/><path d="M13 8.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="currentColor" stroke="none"/></svg></button>
   <button class="btn icon" id="btnMarks" title="Marcadores (B)" disabled><svg viewBox="0 0 24 24"><path d="M7 3h10v17.5l-5-3.8-5 3.8z"/><path d="M12 7.3l.8 1.9 1.9.8-1.9.8-.8 1.9-.8-1.9-1.9-.8 1.9-.8z" fill="currentColor" stroke="none"/></svg></button>
   <button class="btn icon" id="btnDrive" title="Bola de cristal: Google Drive" hidden><svg viewBox="0 0 24 24" class="orb"><circle cx="12" cy="9.6" r="6.6"/><path d="M8.3 15.3L6.6 19.6h10.8l-1.7-4.3"/><path d="M4.8 19.6h14.4"/><path d="M8.6 7.4a4.2 4.2 0 0 1 2.6-1.9" opacity=".7"/><path class="spark" d="M13.6 8.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="currentColor" stroke="none"/></svg></button>
   <span class="sep"></span>
@@ -430,13 +436,15 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
   <div id="empty">
     <div class="card">
       <svg class="star" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2l1.8 6.2L20 10l-6.2 1.8L12 18l-1.8-6.2L4 10l6.2-1.8z"/></svg>
-      <h1>Abra um PDF</h1>
-      <p>Toque em <b>Abrir</b>, arraste um arquivo pra cá ou comece um caderno em branco.</p>
-      <div class="card-actions"><button class="btn primary" id="btnOpen2" disabled>Carregando…</button><button class="btn" id="btnNew2"><svg viewBox="0 0 24 24"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z"/><path d="M6 3v18M4 7h4M4 12h4M4 17h4"/><path d="M13 8.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="currentColor" stroke="none"/></svg>Novo caderno</button><button class="btn" id="btnDrive2" hidden><svg viewBox="0 0 24 24" class="orb"><circle cx="12" cy="9.6" r="6.6"/><path d="M8.3 15.3L6.6 19.6h10.8l-1.7-4.3"/><path d="M4.8 19.6h14.4"/><path d="M8.6 7.4a4.2 4.2 0 0 1 2.6-1.9" opacity=".7"/><path class="spark" d="M13.6 8.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="currentColor" stroke="none"/></svg>Do Google Drive</button></div>
+      <h1>Conjure um arquivo</h1>
+      <p>Abra um PDF deste aparelho ou do seu Drive. Também dá pra arrastar o arquivo pra cá.</p>
+      <div class="card-actions"><button class="btn primary" id="btnOpen2" disabled>Carregando…</button><button class="btn" id="btnDrive2" hidden><svg viewBox="0 0 24 24" class="orb"><circle cx="12" cy="9.6" r="6.6"/><path d="M8.3 15.3L6.6 19.6h10.8l-1.7-4.3"/><path d="M4.8 19.6h14.4"/><path d="M8.6 7.4a4.2 4.2 0 0 1 2.6-1.9" opacity=".7"/><path class="spark" d="M13.6 8.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="currentColor" stroke="none"/></svg>Do Google Drive</button></div>
+      <div class="or"><span>ou</span></div>
+      <button class="btn materialize" id="btnNew2"><svg viewBox="0 0 24 24"><path d="M6 3h11a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6z"/><path d="M6 3v18M4 7h4M4 12h4M4 17h4"/><path d="M13 8.2l.7 1.6 1.6.7-1.6.7-.7 1.6-.7-1.6-1.6-.7 1.6-.7z" fill="currentColor" stroke="none"/></svg>Materialize um caderno</button>
       <div id="recent" hidden><div class="rc-title">Continuar de onde parou</div><ul></ul></div>
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
-      <p class="fine ver">versão 2026.10.31-011141-beta</p>
+      <p class="fine ver">versão 2026.10.31-012332-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -500,8 +508,8 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
 </div>
 
 <div id="nbModal" hidden>
-  <div class="pm-card nb-card" role="dialog" aria-modal="true" aria-label="Novo caderno">
-    <div class="pm-title">✦ Novo caderno ✦<small>Um PDF em branco pra você escrever e desenhar</small></div>
+  <div class="pm-card nb-card" role="dialog" aria-modal="true" aria-label="Materialize um caderno">
+    <div class="pm-title">✦ Materialize um caderno ✦<small>Um PDF em branco pra você escrever e desenhar</small></div>
     <div class="nb-lbl">Nome</div>
     <input id="nbName" maxlength="80" autocomplete="off" autocapitalize="sentences" enterkeyhint="done">
     <div class="nb-lbl">Capa</div>
@@ -514,7 +522,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
     <div class="nb-seg" id="nbSizes"></div>
     <div class="nb-lbl">Páginas pra começar</div>
     <div class="nb-seg" id="nbCount"></div>
-    <div class="nb-row"><button class="btn" id="nbCancel">Cancelar</button><button class="btn primary" id="nbOk">Criar caderno</button></div>
+    <div class="nb-row"><button class="btn" id="nbCancel">Cancelar</button><button class="btn primary" id="nbOk">Materializar ✦</button></div>
   </div>
 </div>
 
@@ -1065,11 +1073,18 @@ function paperOps(pp){
       for (let j = 0; j <= ny; j++) o += `${f(x0)} ${f(y0 + j * g)} m ${f(x0 + nx * g)} ${f(y0 + j * g)} l\n`;
       o += 'S Q\n';
     } else {
-      // pontinhos: traço de comprimento zero com ponta redonda
-      const dot = hexToRgb(line).map(v => +(v * .82).toFixed(3)).join(' ');
-      o += `q ${dot} RG 1.3 w 1 J\n`;
-      for (let j = 0; j <= ny; j++){ const y = f(y0 + j * g); for (let i = 0; i <= nx; i++){ const x = f(x0 + i * g); o += `${x} ${y} m ${x} ${y} l `; } o += 'S\n'; }
-      o += 'Q\n';
+      // pontinhos: bolinhas preenchidas (o Safari não desenha traço de comprimento zero)
+      const dot = hexToRgb(line).map(v => +(v * .74).toFixed(3)).join(' '), r = .85, k = r * .5523;
+      o += `q ${dot} rg\n`;
+      for (let j = 0; j <= ny; j++){
+        const y = y0 + j * g;
+        for (let i = 0; i <= nx; i++){
+          const x = x0 + i * g;
+          o += `${f(x + r)} ${f(y)} m ${f(x + r)} ${f(y + k)} ${f(x + k)} ${f(y + r)} ${f(x)} ${f(y + r)} c ${f(x - k)} ${f(y + r)} ${f(x - r)} ${f(y + k)} ${f(x - r)} ${f(y)} c `
+            + `${f(x - r)} ${f(y - k)} ${f(x - k)} ${f(y - r)} ${f(x)} ${f(y - r)} c ${f(x + k)} ${f(y - r)} ${f(x + r)} ${f(y - k)} ${f(x + r)} ${f(y)} c\n`;
+        }
+      }
+      o += 'f Q\n';
     }
   }
   return o;
@@ -1243,7 +1258,7 @@ $('#nbOk').onclick = async () => {
   const title = ($('#nbName').value.trim() || 'Caderno').replace(/[\\/:*?"<>|]+/g, '-').slice(0, 80);
   try { localStorage.setItem('grimorio.nb', JSON.stringify(NB)); } catch {}
   nbModal(false); saveSession();
-  toast('Costurando o caderno…', 60000);
+  toast('Materializando o caderno…', 60000);
   try {
     const pp = { kind:NB.kind, size:NB.size, tone:NB.tone };
     const bytes = await makeNotebook(pp, NB.n, title, NB.cover);
@@ -1542,15 +1557,18 @@ async function renderPage(pg){
   if (gen !== pg.gen){ c.width = c.height = 0; scheduleVisible(); return; }
   if (pg.pdfCanvas){ pg.pdfCanvas.width = pg.pdfCanvas.height = 0; pg.pdfCanvas.remove(); }
   pg.pdfCanvas = c; pg.el.prepend(c);
-  if (!pg.inkCanvas){ pg.inkCanvas = document.createElement('canvas'); pg.inkCanvas.className = 'ink'; c.after(pg.inkCanvas); }
-  pg.inkCanvas.width = c.width; pg.inkCanvas.height = c.height; pg.dpr = dpr;
+  if (!pg.inkCanvas){
+    pg.hlCanvas = document.createElement('canvas'); pg.hlCanvas.className = 'hlink'; c.after(pg.hlCanvas);
+    pg.inkCanvas = document.createElement('canvas'); pg.inkCanvas.className = 'ink'; pg.hlCanvas.after(pg.inkCanvas);
+  }
+  pg.inkCanvas.width = pg.hlCanvas.width = c.width; pg.inkCanvas.height = pg.hlCanvas.height = c.height; pg.dpr = dpr;
   pg.shown = gen;
   drawInk(pg);
   loadText(pg);
 }
 function unloadPage(pg){
   if (pg.task){ pg.task.cancel(); pg.task = null; }
-  for (const k of ['pdfCanvas', 'inkCanvas']) if (pg[k]){ pg[k].width = pg[k].height = 0; pg[k].remove(); pg[k] = null; }
+  for (const k of ['pdfCanvas', 'hlCanvas', 'inkCanvas']) if (pg[k]){ pg[k].width = pg[k].height = 0; pg[k].remove(); pg[k] = null; }
   pg.shown = -1;
 }
 
@@ -1711,11 +1729,12 @@ let scratch = null;
 function drawInk(pg){
   renderOverlays(pg);
   const c = pg.inkCanvas; if (!c) return;
-  const ctx = c.getContext('2d');
-  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, c.width, c.height);
+  const top = c.getContext('2d'), hl = pg.hlCanvas.getContext('2d');
+  for (const x of [top, hl]){ x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, c.width, c.height); }
   for (const st of pg.strokes){
     if (isOv(st)) continue;
-    if (st.kind === 'stamp'){ drawStamp(ctx, pg, st); continue; }
+    const ctx = st.alpha < 1 ? hl : top;
+    if (st.kind === 'stamp'){ drawStamp(top, pg, st); continue; }
     if (st.alpha >= 1 && st.tool !== 'pencil'){
       ctx.setTransform(pg.dpr, 0, 0, pg.dpr, 0, 0); paintShape(ctx, pg, st);
       continue;
@@ -1745,7 +1764,7 @@ function attachLive(pg, alpha){
   if (!pg.inkCanvas) return false;
   if (live.parentNode !== pg.el) pg.el.appendChild(live);
   if (live.width !== pg.inkCanvas.width || live.height !== pg.inkCanvas.height){ live.width = pg.inkCanvas.width; live.height = pg.inkCanvas.height; }
-  live.style.opacity = alpha;
+  live.style.opacity = alpha; live.classList.toggle('hl', alpha < 1);
   const ctx = live.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, live.width, live.height);
   ctx.setTransform(pg.dpr, 0, 0, pg.dpr, 0, 0);
   return true;
@@ -2933,7 +2952,7 @@ function appearanceStream(ctx, st, body, rect){
   const content = `q /G0 gs ${f2(r)} ${f2(g)} ${f2(b)} rg\n${body}Q`;
   return ctx.register(ctx.flateStream(content, {
     Type:'XObject', Subtype:'Form', FormType:1, BBox:rect,
-    Resources:{ ExtGState:{ G0:{ Type:'ExtGState', ca:st.alpha, CA:st.alpha, BM:'Multiply' } } },
+    Resources:{ ExtGState:{ G0:{ Type:'ExtGState', ca:st.alpha, CA:st.alpha, BM:st.alpha < 1 ? 'Multiply' : 'Normal' } } },
   }));
 }
 function commonFields(st, page, idx){
