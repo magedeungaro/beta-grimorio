@@ -194,9 +194,13 @@ button{font:inherit;color:inherit}
 .ov-note.editing{filter:drop-shadow(0 0 3px #8b5cf6) drop-shadow(0 0 6px #8b5cf6)}
 .tool-eraser .ov-note,.tool-lasso .ov-note{pointer-events:none}
 .tool-lasso .page{cursor:crosshair}
-.sel-box{position:absolute;border:1.5px dashed #7c3aed;background:rgba(139,92,246,.07);border-radius:4px;pointer-events:none;box-shadow:0 0 0 1px rgba(255,255,255,.6)}
+.sel-box{position:absolute;border:1.5px dashed #7c3aed;background:rgba(139,92,246,.07);border-radius:4px;pointer-events:auto;cursor:move;touch-action:none;box-shadow:0 0 0 1px rgba(255,255,255,.6)}
 .sel-bar{position:absolute;left:50%;top:-44px;transform:translateX(-50%);display:flex;gap:4px;padding:4px;border-radius:12px;background:#211836;box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:auto}
 .sel-bar.below{top:auto;bottom:-44px}
+.sel-h{position:absolute;width:16px;height:16px;border-radius:50%;background:#fff;border:2px solid #7c3aed;box-shadow:0 1px 3px rgba(0,0,0,.3);touch-action:none}
+.sel-h::after{content:"";position:absolute;inset:-12px}
+.sel-h.tl{left:-9px;top:-9px;cursor:nwse-resize}.sel-h.br{right:-9px;bottom:-9px;cursor:nwse-resize}
+.sel-h.tr{right:-9px;top:-9px;cursor:nesw-resize}.sel-h.bl{left:-9px;bottom:-9px;cursor:nesw-resize}
 .sel-bar button{height:32px;min-width:32px;padding:0 9px;border:none;border-radius:9px;background:transparent;color:#efeaff;font:600 12.5px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap}
 .sel-bar button:active{background:rgba(200,182,255,.18)}
 .sel-bar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
@@ -351,7 +355,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <div id="recent" hidden><div class="rc-title">Continuar de onde parou</div><ul></ul></div>
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
-      <p class="fine ver">versão 2026.10.30-230528-beta</p>
+      <p class="fine ver">versão 2026.10.30-230838-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -1552,6 +1556,30 @@ function caught(poly, st){
   let n = 0; for (const [x, y] of st.pts) if (inPoly(poly, x, y)) n++;
   return n >= Math.max(1, st.pts.length * .5);   // metade do traço dentro do laço
 }
+const snapMark = st => ({ pts:st.pts?.map(q => [...q]), at:st.at && [...st.at], w:st.w, fs:st.fs });
+function restoreMark(st, sn){
+  if (sn.pts) st.pts = sn.pts.map(q => [...q]);
+  if (sn.at) st.at = [...sn.at];
+  if (sn.w != null) st.w = sn.w;
+  if (sn.fs != null) st.fs = sn.fs;
+  delete st._sm;
+}
+// escala a partir do canto oposto (ax, ay); a espessura e o tamanho da letra acompanham
+function scaleFrom(st, sn, ax, ay, k){
+  if (sn.pts){ st.pts = sn.pts.map(([x, y, w]) => [ax + (x - ax) * k, ay + (y - ay) * k, Math.max(.2, w * k)]); delete st._sm; }
+  if (sn.at) st.at = [ax + (sn.at[0] - ax) * k, ay + (sn.at[1] - ay) * k];
+  if (st.kind === 'box'){ st.w = Math.max(20, sn.w * k); st.fs = Math.max(3, Math.min(120, sn.fs * k)); }
+}
+function startSelDrag(e){
+  const pg = sel.pg, [x, y] = toPdf(pg, e.clientX, e.clientY), h = e.target.closest('.sel-h');
+  if (h){
+    const b = selBounds(), C = [[b[0], b[1]], [b[2], b[1]], [b[2], b[3]], [b[0], b[3]]];
+    const r = h.getBoundingClientRect(), [hx, hy] = toPdf(pg, r.left + r.width / 2, r.top + r.height / 2);
+    let i = 0, best = Infinity; C.forEach(([cx, cy], j) => { const d = Math.hypot(cx - hx, cy - hy); if (d < best){ best = d; i = j; } });
+    const [ax, ay] = C[(i + 2) % 4];
+    active = { kind:'scale', id:e.pointerId, type:e.pointerType, pg, ax, ay, d0:Math.max(1e-3, Math.hypot(x - ax, y - ay)), before:sel.items.map(snapMark), k:1 };
+  } else active = { kind:'move', id:e.pointerId, type:e.pointerType, pg, x0:x, y0:y, dx:0, dy:0 };
+}
 function clearSel(){
   if (!sel) return;
   sel.pg.selEl?.remove(); sel.pg.selEl = null; sel = null;
@@ -1563,7 +1591,8 @@ function renderSelection(){
   let el = pg.selEl;
   if (!el){
     el = pg.selEl = document.createElement('div'); el.className = 'sel-box';
-    el.innerHTML = '<div class="sel-bar"><button data-act="del" title="Apagar seleção"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Apagar</button><button data-act="off" title="Desmarcar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>';
+    el.innerHTML = '<div class="sel-bar"><button data-act="del" title="Apagar seleção"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Apagar</button><button data-act="off" title="Desmarcar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>'
+      + '<i class="sel-h tl"></i><i class="sel-h tr"></i><i class="sel-h bl"></i><i class="sel-h br"></i>';
     el.querySelector('[data-act=del]').onclick = deleteSel;
     el.querySelector('[data-act=off]').onclick = clearSel;
   }
@@ -1597,6 +1626,12 @@ function startLasso(e, pg){
 }
 function moveLasso(e){
   const a = active, pg = a.pg, [x, y] = toPdf(pg, e.clientX, e.clientY);
+  if (a.kind === 'scale'){
+    a.k = Math.max(.1, Math.min(10, Math.hypot(x - a.ax, y - a.ay) / a.d0));
+    sel.items.forEach((st, i) => scaleFrom(st, a.before[i], a.ax, a.ay, a.k));
+    if (!a.raf) a.raf = requestAnimationFrame(() => { a.raf = 0; drawInk(pg); renderSelection(); });
+    return;
+  }
   if (a.kind === 'move'){
     const dx = x - a.x0, dy = y - a.y0, ddx = dx - a.dx, ddy = dy - a.dy;
     if (!ddx && !ddy) return;
@@ -1616,6 +1651,12 @@ function moveLasso(e){
   ctx.setLineDash([5, 4]); ctx.lineWidth = 1.6; ctx.strokeStyle = '#7c3aed'; ctx.stroke(); ctx.setLineDash([]);
 }
 function endLasso(a){
+  if (a.kind === 'scale'){
+    if (a.raf){ cancelAnimationFrame(a.raf); a.raf = 0; }
+    drawInk(a.pg); renderSelection();
+    if (Math.abs(a.k - 1) > 1e-3){ S.undo.push({ type:'scale', pg:a.pg, items:[...sel.items], before:a.before, after:sel.items.map(snapMark) }); S.redo = []; S.dirty = true; refreshButtons(); scheduleSave(); }
+    return;
+  }
   if (a.kind === 'move'){
     if (a.raf){ cancelAnimationFrame(a.raf); a.raf = 0; }
     drawInk(a.pg); renderSelection();
@@ -1708,7 +1749,7 @@ function commit(pg, mark){
 function endStroke(){
   const a = active; active = null;
   if (!a) return;
-  if (a.kind === 'lasso' || a.kind === 'move'){ endLasso(a); return; }
+  if (a.kind === 'lasso' || a.kind === 'move' || a.kind === 'scale'){ endLasso(a); return; }
   if (a.kind === 'ov'){
     if (!a.moved){ if (editing?.st !== a.st) beginEdit(a.pg, a.st, false); }
     else if (editing?.st !== a.st){ S.undo.push({ type:'edit', pg:a.pg, stroke:a.st, before:a.before, after:snap(a.st) }); S.redo = []; S.dirty = true; }
@@ -1727,7 +1768,7 @@ function endStroke(){
   }
   refreshButtons(); scheduleSave();
 }
-function cancelStroke(){ if (['erase', 'ov', 'rz', 'lasso', 'move'].includes(active?.kind)) return endStroke(); clearLive(); active = null; }
+function cancelStroke(){ if (['erase', 'ov', 'rz', 'lasso', 'move', 'scale'].includes(active?.kind)) return endStroke(); clearLive(); active = null; }
 
 function eraseAt(e){
   const a = active, pg = a.pg, [x, y] = toPdf(pg, e.clientX, e.clientY);
@@ -1805,6 +1846,12 @@ function fling(){
 viewer.addEventListener('pointerdown', e => {
   if (!S.doc) return;
   if (e.target.closest('.sel-bar')) return;   // botões da seleção
+  if (sel && !active && e.target.closest('.sel-box') && !(e.pointerType === 'mouse' && e.button !== 0)){
+    if (e.pointerType === 'pen') lastPenAt = performance.now();
+    startSelDrag(e); e.preventDefault();
+    try { viewer.setPointerCapture(e.pointerId); } catch {}
+    return;
+  }
   const ovEl = S.tool !== 'eraser' && S.tool !== 'lasso' && e.target.closest('.ov-item');
   if (ovEl){   // tocou numa caixa/nota: abre, arrasta ou muda a largura
     if (e.target.closest('textarea,.bx-del') || active || (e.pointerType === 'mouse' && e.button !== 0)) return;
@@ -1858,7 +1905,7 @@ viewer.addEventListener('pointermove', e => {
   if (!active || active.id !== e.pointerId) return;
   if (e.pointerType === 'pen') lastPenAt = performance.now();
   if (active.kind === 'ov' || active.kind === 'rz') return moveOv(e);
-  if (active.kind === 'lasso' || active.kind === 'move') return moveLasso(e);
+  if (active.kind === 'lasso' || active.kind === 'move' || active.kind === 'scale') return moveLasso(e);
   if (active.kind === 'place'){ if (Math.hypot(e.clientX - active.x, e.clientY - active.y) > 10) active.ok = false; return; }
   const evs = e.getCoalescedEvents?.() || [];
   if (active.kind === 'text') return moveText(e);
@@ -1901,6 +1948,7 @@ function undo(){
   clearSel();
   const a = S.undo.pop(); if (!a) return;
   if (a.type === 'move'){ for (const st of a.items) translateMark(st, -a.dx, -a.dy); drawInk(a.pg); }
+  else if (a.type === 'scale'){ a.items.forEach((st, i) => restoreMark(st, a.before[i])); drawInk(a.pg); }
   else if (a.type === 'edit'){ Object.assign(a.stroke, structuredClone(a.before)); renderOverlays(a.pg); }
   else if (a.type === 'add'){ const i = a.pg.strokes.lastIndexOf(a.stroke); if (i >= 0) a.pg.strokes.splice(i, 1); drawInk(a.pg); }
   else { for (const it of [...a.items].reverse()) it.pg.strokes.splice(it.index, 0, it.stroke); new Set(a.items.map(i => i.pg)).forEach(drawInk); }
@@ -1911,6 +1959,7 @@ function redo(){
   clearSel();
   const a = S.redo.pop(); if (!a) return;
   if (a.type === 'move'){ for (const st of a.items) translateMark(st, a.dx, a.dy); drawInk(a.pg); }
+  else if (a.type === 'scale'){ a.items.forEach((st, i) => restoreMark(st, a.after[i])); drawInk(a.pg); }
   else if (a.type === 'edit'){ Object.assign(a.stroke, structuredClone(a.after)); renderOverlays(a.pg); }
   else if (a.type === 'add'){ a.pg.strokes.push(a.stroke); drawInk(a.pg); }
   else { for (const it of a.items){ const i = it.pg.strokes.indexOf(it.stroke); if (i >= 0) it.pg.strokes.splice(i, 1); } new Set(a.items.map(i => i.pg)).forEach(drawInk); }
