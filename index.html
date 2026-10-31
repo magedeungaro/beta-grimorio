@@ -402,7 +402,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <div id="recent" hidden><div class="rc-title">Continuar de onde parou</div><ul></ul></div>
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
-      <p class="fine ver">versão 2026.10.31-000948-beta</p>
+      <p class="fine ver">versão 2026.10.31-001510-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -1633,6 +1633,26 @@ function ellipseD(cx, cy, rx, ry){
        + `C${f(cx - rx, cy - ky, cx - kx, cy - ry, cx, cy - ry)} C${f(cx + kx, cy - ry, cx + rx, cy - ky, cx + rx, cy)} Z`;
 }
 const circD = (cx, cy, r) => ellipseD(cx, cy, r, r);
+function arcD(cx, cy, r, a0, a1){   // graus (y pra baixo); continua do ponto atual com curvas C
+  const n = Math.max(1, Math.ceil(Math.abs(a1 - a0) / 90)), da = (a1 - a0) / n * Math.PI / 180; let out = '';
+  for (let i = 0; i < n; i++){
+    const t0 = a0 * Math.PI / 180 + i * da, t1 = t0 + da, k = 4 / 3 * Math.tan(da / 4);
+    const x0 = cx + r * Math.cos(t0), y0 = cy + r * Math.sin(t0), x3 = cx + r * Math.cos(t1), y3 = cy + r * Math.sin(t1);
+    out += ` C${R1(x0 - k * r * Math.sin(t0))} ${R1(y0 + k * r * Math.cos(t0))} ${R1(x3 + k * r * Math.sin(t1))} ${R1(y3 - k * r * Math.cos(t1))} ${R1(x3)} ${R1(y3)}`;
+  }
+  return out;
+}
+// crescente: círculo (cx, r) menos um círculo igual deslocado `off` pro lado das pontas (dir = -1 pontas à esquerda)
+function crescentD(cx, cy, r, off, dir){
+  const ix = cx + dir * off / 2, h = Math.sqrt(r * r - (off / 2) ** 2), a = Math.atan2(h, dir * (ix - cx) || 1e-9) * 180 / Math.PI;
+  const m = (x, y) => [dir < 0 ? x : 100 - x, y];
+  if (dir < 0){
+    const A = Math.atan2(-h, ix - cx) * 180 / Math.PI, B = Math.atan2(-h, ix - (cx - off)) * 180 / Math.PI;
+    return `M${R1(ix)} ${R1(cy - h)}` + arcD(cx, cy, r, A, -A) + arcD(cx - off, cy, r, -B, B) + ' Z';
+  }
+  return null;
+}
+const mirrorD = d => d.replace(/(-?\d*\.?\d+) (-?\d*\.?\d+)/g, (_, x, y) => `${R1(100 - +x)} ${y}`);
 const polyD = (pts, close) => pts.map(([x, y], i) => `${i ? 'L' : 'M'}${R1(x)} ${R1(y)}`).join(' ') + (close ? ' Z' : '');
 const star4D = (cx, cy, r) => { const q = r * .28; return polyD([[cx, cy - r], [cx + q, cy - q], [cx + r, cy], [cx + q, cy + q], [cx, cy + r], [cx - q, cy + q], [cx - r, cy], [cx - q, cy - q]], true); };
 function spiralParts(cw){
@@ -1719,13 +1739,9 @@ const STAMPS = [
   { id:'moon', cat:'Céu', fixed:true, name:'Lua crescente', parts:(() => { const d = 'M56 8 C32 9 12 28 12 52 C12 76 32 94 56 94 C64 94 72 92 78 88 C58 84 44 70 44 51 C44 32 58 17 78 13 C72 10 64 8 56 8 Z';
     return [{ d, fill:true, c:'#fde68a' }, { d, stroke:3, c:'#d97706' }, { d:circD(26, 40, 3.5), fill:true, c:'#fcd34d' }, { d:circD(30, 66, 5), fill:true, c:'#fcd34d' }, { d:circD(22, 56, 2.5), fill:true, c:'#fcd34d' }]; })() },
   { id:'triplemoon', cat:'Céu', fixed:true, name:'Lua tríplice', parts:(() => {
-    const L = 'M8 14 C25 21 34 35 34 50 C34 65 25 79 8 86 C17 75 21 63 21 50 C21 37 17 25 8 14 Z', R = 'M92 14 C75 21 66 35 66 50 C66 65 75 79 92 86 C83 75 79 63 79 50 C79 37 83 25 92 14 Z', C = circD(50, 50, 13);
+    const r = 15.5, L = crescentD(17.5, 50, r, 9.5, -1), R = mirrorD(L), C = circD(50, 50, r);
     return [{ d:L, fill:true, c:'#ddd6fe' }, { d:R, fill:true, c:'#ddd6fe' }, { d:C, fill:true, c:'#f5f3ff' },
             { d:L, stroke:2.5, c:'#6d28d9' }, { d:R, stroke:2.5, c:'#6d28d9' }, { d:C, stroke:2.5, c:'#6d28d9' }]; })() },
-  { id:'sun', cat:'Céu', fixed:true, name:'Sol', parts:[
-    { d:Array.from({ length:8 }, (_, k) => { const a = k * Math.PI / 4, c = Math.cos(a), sn = Math.sin(a); return `M${R1(50 + 28 * c)} ${R1(50 + 28 * sn)} L${R1(50 + (k % 2 ? 40 : 45) * c)} ${R1(50 + (k % 2 ? 40 : 45) * sn)}`; }).join(' '), stroke:6.5, c:'#f97316' },
-    { d:circD(50, 50, 19), fill:true, c:'#facc15' }, { d:circD(50, 50, 19), stroke:3, c:'#ea580c' },
-    { d:'M40 44 C42 39 46 36 51 35', stroke:2.5, c:'#fef9c3' } ] },
   { id:'aries', cat:'Zodíaco', name:'Áries ♈', parts:[{ d:'M50 92 L50 40 M50 40 C50 18 38 9 27 11 C16 13 12 26 19 34 M50 40 C50 18 62 9 73 11 C84 13 88 26 81 34', stroke:7 }] },
   { id:'taurus', cat:'Zodíaco', name:'Touro ♉', parts:[{ d:circD(50, 64, 22), stroke:7 }, { d:'M16 14 C22 32 34 40 50 40 C66 40 78 32 84 14', stroke:7 }] },
   { id:'gemini', cat:'Zodíaco', name:'Gêmeos ♊', parts:[{ d:'M22 14 C40 21 60 21 78 14 M22 86 C40 79 60 79 78 86 M38 19 L38 81 M62 19 L62 81', stroke:7 }] },
