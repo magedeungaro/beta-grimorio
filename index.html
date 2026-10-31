@@ -187,10 +187,12 @@ button{font:inherit;color:inherit}
 .size[hidden]{display:none}
 .tool-box .page{cursor:text}
 .tool-stamp .page{cursor:copy}
-.dr-stamps{margin-top:14px;padding-top:12px;border-top:1px dashed #4a3d66}
+.dr-stamps{margin-top:14px;padding-top:12px;border-top:1px dashed #4a3d66;max-height:min(46vh,420px);overflow-y:auto;overscroll-behavior:contain}
 .dr-stamps[hidden]{display:none}
 .dr-stamps .lbl2{font-size:12.5px;color:var(--muted);display:block;margin-bottom:8px}
 .st-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(52px,1fr));gap:8px}
+.st-sec{grid-column:1/-1;font-size:11px;font-weight:700;letter-spacing:.08em;text-transform:uppercase;color:var(--muted);margin:6px 0 -2px}
+.st-sec:first-child{margin-top:0}
 .st-btn{aspect-ratio:1;border-radius:12px;border:none;padding:7px;cursor:pointer;color:#efeaff;
   background:linear-gradient(180deg,#160f25,#1e1630);box-shadow:inset 0 2px 6px rgba(0,0,0,.55)}
 .st-btn svg{width:100%;height:100%;display:block;overflow:visible}
@@ -392,7 +394,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <div id="recent" hidden><div class="rc-title">Continuar de onde parou</div><ul></ul></div>
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
-      <p class="fine ver">versão 2026.10.30-235507-beta</p>
+      <p class="fine ver">versão 2026.10.30-235628-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -415,7 +417,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <button class="dr-item" data-tool="lasso" title="Laço: selecionar e mover (V)"><span class="slot"><svg viewBox="0 0 24 24"><path d="M12 4c-4.6 0-8 2.3-8 5.4 0 3 3.2 5.2 7.4 5.4" stroke-dasharray="2.6 2.4"/><path d="M14.6 14.5c3.2-.7 5.4-2.7 5.4-5.1C20 6.3 16.6 4 12 4"/><path d="M11.4 14.8c-1 1.2-.6 3.2 1 3.6 1.3.3 1.6 1.5.9 2.6"/><path d="M14 10.5l5.5 5.5-2.4.4 1.4 2.8-1.3.6-1.4-2.8-1.8 1.5z" fill="currentColor" stroke-width="1"/></svg></span><span class="nm">Laço</span></button>
       <button class="dr-item" data-tool="eraser" title="Borracha (E)"><span class="slot"><svg viewBox="0 0 24 24"><path d="M8.5 20L3.5 15a1.5 1.5 0 0 1 0-2.1L13 3.4a1.5 1.5 0 0 1 2.1 0l5.5 5.5a1.5 1.5 0 0 1 0 2.1L11.5 20z"/><path d="M8.5 20H21"/><path d="M7 9.5l7.5 7.5"/></svg></span><span class="nm">Borracha</span></button>
     </div>
-    <div class="dr-stamps" id="stampRow" hidden><span class="lbl2">Grimório de carimbos</span><div class="st-grid" id="stampGrid"></div></div>
+    <div class="dr-stamps" id="stampRow" hidden><span class="lbl2">✦ Grimório de carimbos</span><div class="st-grid" id="stampGrid"></div></div>
     <div class="dr-size" id="sizeRow"><span class="lbl2" id="sizeLbl">Espessura</span><input class="size" id="size" type="range"><span class="dot-wrap"><span id="sizeDot"></span></span></div>
   </div>
   <div class="dr-knob"></div>
@@ -1642,55 +1644,77 @@ function triskeleParts(){
 }
 const PENT = [0, 2, 4, 1, 3].map(k => { const a = (-90 + 72 * k) * Math.PI / 180; return [50 + 41 * Math.cos(a), 50 + 41 * Math.sin(a)]; });
 const STAMPS = [
-  { id:'pentagram', name:'Pentagrama', parts:[{ d:circD(50, 50, 45), stroke:5 }, { d:polyD(PENT, true), stroke:5 }] },
-  { id:'sigil', name:'Sigilo', parts:[
+  { id:'pentagram', cat:'Místicos', name:'Pentagrama', parts:[{ d:circD(50, 50, 45), stroke:5 }, { d:polyD(PENT, true), stroke:5 }] },
+  { id:'sigil', cat:'Místicos', name:'Sigilo', parts:[
     { d:circD(50, 50, 44), stroke:3.5 },
     { d:'M50 30 L50 82', stroke:4.5 },
     { d:'M36 16 C40 30 60 30 64 16', stroke:4.5 },
     { d:'M28 50 L72 50', stroke:4.5 }, { d:circD(24, 50, 4.5), stroke:3.5 }, { d:circD(76, 50, 4.5), stroke:3.5 },
     { d:'M50 66 L66 78', stroke:4.5 }, { d:circD(69, 80.5, 3.5), fill:true },
     { d:'M50 82 L38 72', stroke:4.5 }, { d:star4D(50, 40, 6), fill:true } ] },
-  { id:'cat', name:'Gato preto', parts:[
+  { id:'cat', cat:'Místicos', name:'Gato preto', parts:[
     { d:'M34 26 L36 6 L47 17 Z M66 26 L64 6 L53 17 Z', fill:true },
     { d:ellipseD(50, 30, 17, 15), fill:true },
     { d:'M37 42 C27 58 25 80 30 94 L70 94 C75 80 73 58 63 42 Z', fill:true },
     { d:'M66 90 C86 89 94 72 86 58 C84 54 79 56 81 60 C87 71 80 82 64 83 Z', fill:true },
     { d:ellipseD(43.5, 29, 3.2, 3.8), fill:true, paper:true }, { d:ellipseD(56.5, 29, 3.2, 3.8), fill:true, paper:true } ] },
-  { id:'pumpkin', name:'Abóbora', parts:[
+  { id:'pumpkin', cat:'Místicos', name:'Abóbora', parts:[
     { d:ellipseD(50, 60, 41, 31), fill:true },
     { d:'M46 31 C46 22 50 15 59 13 L61 18 C55 20 53 25 54 31 Z', fill:true },
     { d:'M31 36 C22 50 22 72 33 86 M69 36 C78 50 78 72 67 86', stroke:2.5, paper:true },
     { d:'M33 54 L44 54 L38.5 43 Z M56 54 L67 54 L61.5 43 Z', fill:true, paper:true },
     { d:'M30 65 L37 71 L43.5 65 L50 71 L56.5 65 L63 71 L70 65 C66 80 34 80 30 65 Z', fill:true, paper:true } ] },
-  { id:'hat', name:'Chapéu de bruxa', parts:[
+  { id:'hat', cat:'Místicos', name:'Chapéu de bruxa', parts:[
     { d:ellipseD(50, 83, 46, 9), fill:true },
     { d:'M27 82 C33 62 38 44 44 28 C48 16 58 8 72 11 C63 14 59 21 58 31 C59 50 65 66 73 82 Z', fill:true },
     { d:'M30 72 C44 76 57 76 70 72 L71.5 78 C57 82 44 82 28.5 78 Z', fill:true, paper:true },
     { d:'M45 71 L55 71 L55 80 L45 80 Z', stroke:2.5 } ] },
-  { id:'candle', name:'Vela', parts:[
+  { id:'candle', cat:'Místicos', name:'Vela', parts:[
     { d:'M50 6 C59 17 63 24 59 32 C56 38 44 38 41 32 C37 24 41 17 50 6 Z', fill:true },
     { d:'M50 17 C54 23 55 27 53 30.5 C52 33 48 33 47 30.5 C45 27 46 23 50 17 Z', fill:true, paper:true },
     { d:'M50 35 L50 41', stroke:3 },
     { d:'M37 41 L63 41 L63 90 L37 90 Z', fill:true },
     { d:'M42 47 L45 47 L45 83 L42 83 Z', fill:true, paper:true },
     { d:ellipseD(50, 91, 23, 5), fill:true } ] },
-  { id:'orb', name:'Bola de cristal', parts:[
+  { id:'orb', cat:'Místicos', name:'Bola de cristal', parts:[
     { d:circD(50, 43, 31), stroke:5 },
     { d:'M34 37 C36 28 42 22 50 20', stroke:4 },
     { d:star4D(55, 46, 11), fill:true },
     { d:'M32 75 L37 69 L63 69 L68 75 Z', fill:true },
     { d:'M22 76 L78 76 L78 86 L22 86 Z', fill:true } ] },
-  { id:'triskele', name:'Triskle', parts:triskeleParts() },
-  { id:'algiz', name:'Runa Algiz ᛉ', parts:[{ d:'M50 90 L50 10 M50 44 L24 14 M50 44 L76 14', stroke:8 }] },
-  { id:'fehu', name:'Runa Fehu ᚠ', parts:[{ d:'M36 92 L36 8 M36 30 L68 12 M36 54 L70 34', stroke:8 }] },
-  { id:'othala', name:'Runa Othala ᛟ', parts:[{ d:'M50 8 L75 40 L36 90 M50 8 L25 40 L64 90', stroke:8 }] },
-  { id:'mannaz', name:'Runa Mannaz ᛗ', parts:[{ d:'M24 92 L24 8 L76 46 M76 92 L76 8 L24 46', stroke:8 }] },
-  { id:'gebo', name:'Runa Gebo ᚷ', parts:[{ d:'M22 10 L78 90 M78 10 L22 90', stroke:8 }] },
-  { id:'ehwaz', name:'Runa Ehwaz ᛖ', parts:[{ d:'M24 92 L24 8 L50 36 L76 8 L76 92', stroke:8 }] },
-  { id:'banish', name:'Banir (espiral anti-horária)', parts:spiralParts(false) },
-  { id:'invite', name:'Convidar (espiral horária)', parts:spiralParts(true) },
+  { id:'triskele', cat:'Místicos', name:'Triskle', parts:triskeleParts() },
+  { id:'algiz', cat:'Runas', name:'Runa Algiz ᛉ', parts:[{ d:'M50 90 L50 10 M50 44 L24 14 M50 44 L76 14', stroke:8 }] },
+  { id:'fehu', cat:'Runas', name:'Runa Fehu ᚠ', parts:[{ d:'M36 92 L36 8 M36 30 L68 12 M36 54 L70 34', stroke:8 }] },
+  { id:'othala', cat:'Runas', name:'Runa Othala ᛟ', parts:[{ d:'M50 8 L75 40 L36 90 M50 8 L25 40 L64 90', stroke:8 }] },
+  { id:'mannaz', cat:'Runas', name:'Runa Mannaz ᛗ', parts:[{ d:'M24 92 L24 8 L76 46 M76 92 L76 8 L24 46', stroke:8 }] },
+  { id:'gebo', cat:'Runas', name:'Runa Gebo ᚷ', parts:[{ d:'M22 10 L78 90 M78 10 L22 90', stroke:8 }] },
+  { id:'ehwaz', cat:'Runas', name:'Runa Ehwaz ᛖ', parts:[{ d:'M24 92 L24 8 L50 36 L76 8 L76 92', stroke:8 }] },
+  { id:'star', cat:'Céu', name:'Estrela', parts:[{ d:polyD(Array.from({ length:10 }, (_, k) => { const a = (-90 + 36 * k) * Math.PI / 180, r = k % 2 ? 18 : 45; return [50 + r * Math.cos(a), 52 + r * Math.sin(a)]; }), true), fill:true }] },
+  { id:'sparkles', cat:'Céu', name:'Estrelinhas', parts:[{ d:star4D(40, 58, 28), fill:true }, { d:star4D(73, 25, 15), fill:true }, { d:star4D(78, 76, 9), fill:true }] },
+  { id:'moon', cat:'Céu', name:'Lua crescente', parts:[{ d:'M56 8 C32 9 12 28 12 52 C12 76 32 94 56 94 C64 94 72 92 78 88 C58 84 44 70 44 51 C44 32 58 17 78 13 C72 10 64 8 56 8 Z', fill:true }] },
+  { id:'triplemoon', cat:'Céu', name:'Lua tríplice', parts:[
+    { d:circD(50, 50, 17), fill:true },
+    { d:'M30 20 C14 25 5 37 5 50 C5 63 14 75 30 80 C23 72 19 61 19 50 C19 39 23 28 30 20 Z', fill:true },
+    { d:'M70 20 C86 25 95 37 95 50 C95 63 86 75 70 80 C77 72 81 61 81 50 C81 39 77 28 70 20 Z', fill:true } ] },
+  { id:'sun', cat:'Céu', name:'Sol', parts:[{ d:circD(50, 50, 19), fill:true },
+    { d:Array.from({ length:8 }, (_, k) => { const a = k * Math.PI / 4, c = Math.cos(a), sn = Math.sin(a); return `M${R1(50 + 28 * c)} ${R1(50 + 28 * sn)} L${R1(50 + (k % 2 ? 40 : 45) * c)} ${R1(50 + (k % 2 ? 40 : 45) * sn)}`; }).join(' '), stroke:6 }] },
+  { id:'aries', cat:'Zodíaco', name:'Áries ♈', parts:[{ d:'M50 92 L50 40 M50 40 C50 18 38 9 27 11 C16 13 12 26 19 34 M50 40 C50 18 62 9 73 11 C84 13 88 26 81 34', stroke:7 }] },
+  { id:'taurus', cat:'Zodíaco', name:'Touro ♉', parts:[{ d:circD(50, 64, 22), stroke:7 }, { d:'M16 14 C22 32 34 40 50 40 C66 40 78 32 84 14', stroke:7 }] },
+  { id:'gemini', cat:'Zodíaco', name:'Gêmeos ♊', parts:[{ d:'M22 14 C40 21 60 21 78 14 M22 86 C40 79 60 79 78 86 M38 19 L38 81 M62 19 L62 81', stroke:7 }] },
+  { id:'cancer', cat:'Zodíaco', name:'Câncer ♋', parts:[{ d:circD(30, 38, 10), stroke:7 }, { d:'M30 28 C46 18 70 18 88 32', stroke:7 }, { d:circD(70, 62, 10), stroke:7 }, { d:'M70 72 C54 82 30 82 12 68', stroke:7 }] },
+  { id:'leo', cat:'Zodíaco', name:'Leão ♌', parts:[{ d:circD(28, 64, 13), stroke:7 }, { d:'M37 54 C29 38 34 16 54 16 C72 16 78 32 71 46 C64 58 62 70 70 80 C76 88 86 86 89 78', stroke:7 }] },
+  { id:'virgo', cat:'Zodíaco', name:'Virgem ♍', parts:[{ d:'M12 82 L12 36 C12 24 29 24 29 36 L29 82 M29 36 C29 24 46 24 46 36 L46 72 C46 86 62 90 70 78 C78 64 64 52 57 64 L45 92', stroke:6.5 }] },
+  { id:'libra', cat:'Zodíaco', name:'Libra ♎', parts:[{ d:'M12 82 L88 82 M12 66 L33 66 C28 42 40 26 50 26 C60 26 72 42 67 66 L88 66', stroke:7 }] },
+  { id:'scorpio', cat:'Zodíaco', name:'Escorpião ♏', parts:[{ d:'M10 82 L10 36 C10 24 27 24 27 36 L27 82 M27 36 C27 24 44 24 44 36 L44 72 C44 84 56 86 66 80 L82 70 M70 64 L83 69 L77 82', stroke:6.5 }] },
+  { id:'sagittarius', cat:'Zodíaco', name:'Sagitário ♐', parts:[{ d:'M16 84 L84 16 M54 16 L84 16 L84 46 M28 46 L54 72', stroke:7 }] },
+  { id:'capricorn', cat:'Zodíaco', name:'Capricórnio ♑', parts:[{ d:'M10 26 C18 24 22 34 24 48 L28 72 C32 48 37 28 50 28 C61 28 63 42 61 58 C59 74 63 88 75 88 C87 88 92 74 84 65 C76 56 62 62 61 76', stroke:6.5 }] },
+  { id:'aquarius', cat:'Zodíaco', name:'Aquário ♒', parts:[{ d:'M14 42 L28 30 L43 42 L57 30 L72 42 L86 30 M14 72 L28 60 L43 72 L57 60 L72 72 L86 60', stroke:7 }] },
+  { id:'pisces', cat:'Zodíaco', name:'Peixes ♓', parts:[{ d:'M22 12 C42 30 42 70 22 88 M78 12 C58 30 58 70 78 88 M28 50 L72 50', stroke:7 }] },
+  { id:'banish', cat:'Místicos', name:'Banir (espiral anti-horária)', parts:spiralParts(false) },
+  { id:'invite', cat:'Místicos', name:'Convidar (espiral horária)', parts:spiralParts(true) },
 ];
 const STAMP = Object.fromEntries(STAMPS.map(t => [t.id, t]));
+const STAMP_CATS = ['Místicos', 'Céu', 'Runas', 'Zodíaco'];
 S.stamp = (() => { try { const v = localStorage.getItem('grimorio.stamp'); return STAMP[v] ? v : 'pentagram'; } catch { return 'pentagram'; } })();
 const pathCache = new Map();
 const path2d = d => pathCache.get(d) || (pathCache.set(d, new Path2D(d)), pathCache.get(d));
@@ -1713,7 +1737,9 @@ function stampSvg(def){
 }
 function renderStampGrid(){
   const g = $('#stampGrid'); g.innerHTML = '';
-  for (const def of STAMPS){
+  let cat = null;
+  for (const def of [...STAMPS].sort((a, b) => STAMP_CATS.indexOf(a.cat) - STAMP_CATS.indexOf(b.cat))){
+    if (def.cat !== cat){ cat = def.cat; const h = document.createElement('div'); h.className = 'st-sec'; h.textContent = cat; g.appendChild(h); }
     const b = document.createElement('button'); b.className = 'st-btn' + (def.id === S.stamp ? ' on' : ''); b.title = def.name; b.innerHTML = stampSvg(def);
     b.onclick = () => { S.stamp = def.id; try { localStorage.setItem('grimorio.stamp', def.id); } catch {} renderStampGrid(); toast(def.name + ' ✦ toque na página pra carimbar'); setTimeout(() => openDrawer(false), 260); };
     g.appendChild(b);
