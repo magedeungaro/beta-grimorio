@@ -355,7 +355,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <div id="recent" hidden><div class="rc-title">Continuar de onde parou</div><ul></ul></div>
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
-      <p class="fine ver">versão 2026.10.30-231738-beta</p>
+      <p class="fine ver">versão 2026.10.30-232155-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -1295,10 +1295,12 @@ function grain(ctx){
   }
   return ctx.createPattern(grainPattern, 'repeat');
 }
-function applyGrain(ctx, clip){   // clip = [x0,y0,x1,y1] em px do canvas, ou null pro canvas todo
+function applyGrain(ctx, clip, ox = 0, oy = 0){   // clip = [x0,y0,x1,y1] em px do canvas; ox/oy = onde esse canvas começa na página
   ctx.save(); ctx.setTransform(1, 0, 0, 1, 0, 0);
   if (clip){ ctx.beginPath(); ctx.rect(clip[0], clip[1], clip[2] - clip[0], clip[3] - clip[1]); ctx.clip(); }
-  ctx.globalCompositeOperation = 'destination-in'; ctx.fillStyle = grain(ctx);
+  const pat = grain(ctx);
+  if ((ox || oy) && pat.setTransform && typeof DOMMatrix === 'function') pat.setTransform(new DOMMatrix([1, 0, 0, 1, -ox, -oy]));
+  ctx.globalCompositeOperation = 'destination-in'; ctx.fillStyle = pat;
   ctx.fillRect(0, 0, ctx.canvas.width, ctx.canvas.height);
   ctx.restore();
 }
@@ -1320,15 +1322,23 @@ function drawInk(pg){
       ctx.setTransform(pg.dpr, 0, 0, pg.dpr, 0, 0); paintShape(ctx, pg, st);
       continue;
     }
+    const r = boxPx(pg, st, c); if (!r) continue;
     if (!scratch) scratch = document.createElement('canvas');
-    if (scratch.width !== c.width || scratch.height !== c.height){ scratch.width = c.width; scratch.height = c.height; }
+    if (scratch.width < r.w || scratch.height < r.h){ scratch.width = Math.max(scratch.width, r.w); scratch.height = Math.max(scratch.height, r.h); }
     const sx = scratch.getContext('2d');
-    sx.setTransform(1, 0, 0, 1, 0, 0); sx.clearRect(0, 0, scratch.width, scratch.height);
-    sx.setTransform(pg.dpr, 0, 0, pg.dpr, 0, 0); paintShape(sx, pg, st);
-    if (st.tool === 'pencil') applyGrain(sx, null);
-    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = st.alpha; ctx.drawImage(scratch, 0, 0); ctx.globalAlpha = 1;
+    sx.setTransform(1, 0, 0, 1, 0, 0); sx.clearRect(0, 0, r.w, r.h);
+    sx.setTransform(pg.dpr, 0, 0, pg.dpr, -r.x, -r.y); paintShape(sx, pg, st);
+    if (st.tool === 'pencil') applyGrain(sx, [0, 0, r.w, r.h], r.x, r.y);
+    ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = st.alpha; ctx.drawImage(scratch, 0, 0, r.w, r.h, r.x, r.y, r.w, r.h); ctx.globalAlpha = 1;
   }
-  if (scratch && scratch.width * scratch.height > 4e6){ scratch.width = scratch.height = 0; }
+}
+// retângulo do traço em px do canvas (com folga), recortado à página
+function boxPx(pg, st, c){
+  const b = markBounds(st), pad = 2;
+  const q = [[b[0], b[1]], [b[2], b[3]]].map(([x, y]) => pg.vp.convertToViewportPoint(x, y));
+  const x0 = Math.max(0, Math.floor(Math.min(q[0][0], q[1][0]) * pg.dpr) - pad), y0 = Math.max(0, Math.floor(Math.min(q[0][1], q[1][1]) * pg.dpr) - pad);
+  const x1 = Math.min(c.width, Math.ceil(Math.max(q[0][0], q[1][0]) * pg.dpr) + pad), y1 = Math.min(c.height, Math.ceil(Math.max(q[0][1], q[1][1]) * pg.dpr) + pad);
+  return x1 > x0 && y1 > y0 ? { x:x0, y:y0, w:x1 - x0, h:y1 - y0 } : null;
 }
 
 // canvas "ao vivo" compartilhado: só existe na página onde se está desenhando
@@ -1576,15 +1586,17 @@ function groupPage(pg){
 var sel = null;   // { pg, items:[stroke…] } (var: setTool roda antes desta linha)
 const selectable = st => st.kind !== 'text';
 function translateMark(st, dx, dy){
-  if (st.pts){ for (const q of st.pts){ q[0] += dx; q[1] += dy; } delete st._sm; }
+  if (st.pts){ for (const q of st.pts){ q[0] += dx; q[1] += dy; } delete st._sm; delete st._bb; }
   if (st.at){ st.at = [st.at[0] + dx, st.at[1] + dy]; }
 }
 function markBounds(st){
   if (st.kind === 'note') return [st.at[0] - 10, st.at[1] - 10, st.at[0] + 10, st.at[1] + 10];
   if (st.kind === 'box'){ const h = st._h || st.fs * 1.25 + 2 * BOX_PAD; return [st.at[0], st.at[1] - h, st.at[0] + st.w, st.at[1]]; }
+  if (st._bb) return st._bb;
   let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  if (st.kind === 'text'){ for (const [a, b, c, d] of st.rects){ x0 = Math.min(x0, a); y0 = Math.min(y0, b); x1 = Math.max(x1, c); y1 = Math.max(y1, d); } return (st._bb = [x0, y0, x1, y1]); }
   for (const [x, y, w] of st.pts){ const h = w / 2; x0 = Math.min(x0, x - h); y0 = Math.min(y0, y - h); x1 = Math.max(x1, x + h); y1 = Math.max(y1, y + h); }
-  return [x0, y0, x1, y1];
+  return (st._bb = [x0, y0, x1, y1]);
 }
 function selBounds(){
   let b = null;
@@ -1611,11 +1623,11 @@ function restoreMark(st, sn){
   if (sn.at) st.at = [...sn.at];
   if (sn.w != null) st.w = sn.w;
   if (sn.fs != null) st.fs = sn.fs;
-  delete st._sm;
+  delete st._sm; delete st._bb;
 }
 // escala a partir do canto oposto (ax, ay); a espessura e o tamanho da letra acompanham
 function scaleFrom(st, sn, ax, ay, k){
-  if (sn.pts){ st.pts = sn.pts.map(([x, y, w]) => [ax + (x - ax) * k, ay + (y - ay) * k, Math.max(.2, w * k)]); delete st._sm; }
+  if (sn.pts){ st.pts = sn.pts.map(([x, y, w]) => [ax + (x - ax) * k, ay + (y - ay) * k, Math.max(.2, w * k)]); delete st._sm; delete st._bb; }
   if (sn.at) st.at = [ax + (sn.at[0] - ax) * k, ay + (sn.at[1] - ay) * k];
   if (st.kind === 'box'){ st.w = Math.max(20, sn.w * k); st.fs = Math.max(3, Math.min(120, sn.fs * k)); }
 }
@@ -1809,6 +1821,8 @@ function endStroke(){
   if (a.kind === 'rz') return;
   if (a.kind === 'place'){ if (a.ok) placeNew(a.pg, a.x, a.y); return; }
   if (a.kind === 'erase'){
+    if (a.raf){ cancelAnimationFrame(a.raf); a.raf = 0; }
+    if (a.dirty){ a.dirty = false; drawInk(a.pg); }
     clearLive();
     if (a.removed.length){ S.undo.push({ type:'erase', items:a.removed }); S.redo = []; S.dirty = true; }
   } else if (a.kind === 'text'){
@@ -1824,16 +1838,24 @@ function cancelStroke(){ if (['erase', 'ov', 'rz', 'lasso', 'move', 'scale'].inc
 function eraseAt(e){
   const a = active, pg = a.pg, [x, y] = toPdf(pg, e.clientX, e.clientY);
   const rad = TOOLS.eraser.size.val / 2 / pg.vp.scale;
-  let hit = false;
   for (let i = pg.strokes.length - 1; i >= 0; i--){
-    if (markHit(pg.strokes[i], x, y, rad)){ a.removed.push({ pg, stroke:pg.strokes[i], index:i }); pg.strokes.splice(i, 1); hit = true; }
+    const st = pg.strokes[i];
+    if (st.kind === 'ink' || st.kind === 'box' || st.kind === 'note'){   // descarta rápido o que está longe
+      const b = markBounds(st);
+      if (x < b[0] - rad - 12 || x > b[2] + rad + 12 || y < b[1] - rad - 12 || y > b[3] + rad + 12) continue;
+    }
+    if (markHit(st, x, y, rad)){ a.removed.push({ pg, stroke:st, index:i }); pg.strokes.splice(i, 1); a.dirty = true; }
   }
-  if (hit) drawInk(pg);
-  if (attachLive(pg, 1)){
-    const ctx = live.getContext('2d'), [vx, vy] = pg.vp.convertToViewportPoint(x, y);
-    ctx.strokeStyle = 'rgba(139,92,246,.9)'; ctx.lineWidth = 1.5; ctx.fillStyle = 'rgba(200,182,255,.25)';
-    ctx.beginPath(); ctx.arc(vx, vy, TOOLS.eraser.size.val / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
-  }
+  a.cx = x; a.cy = y;
+  if (!a.raf) a.raf = requestAnimationFrame(() => eraseFrame(a));
+}
+function eraseFrame(a){
+  a.raf = 0;
+  if (a.dirty){ a.dirty = false; drawInk(a.pg); }
+  if (active !== a || !attachLive(a.pg, 1)) return;
+  const ctx = live.getContext('2d'), [vx, vy] = a.pg.vp.convertToViewportPoint(a.cx, a.cy);
+  ctx.strokeStyle = 'rgba(139,92,246,.9)'; ctx.lineWidth = 1.5; ctx.fillStyle = 'rgba(200,182,255,.25)';
+  ctx.beginPath(); ctx.arc(vx, vy, TOOLS.eraser.size.val / 2, 0, Math.PI * 2); ctx.fill(); ctx.stroke();
 }
 function markHit(st, x, y, rad){
   if (st.kind === 'note') return Math.hypot(x - st.at[0], y - st.at[1]) <= rad + 9;
