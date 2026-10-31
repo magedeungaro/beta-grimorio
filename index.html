@@ -25,6 +25,8 @@
 }
 @media (prefers-color-scheme:dark){ :root{ --bg:#161122; --page-shadow:0 1px 3px rgba(0,0,0,.5),0 8px 28px rgba(0,0,0,.35);} }
 *{box-sizing:border-box}
+html{overscroll-behavior:none}
+body{position:fixed;inset:0;overscroll-behavior:none}
 html,body{margin:0;height:100%;background:var(--bg);font:14px/1.3 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;color:var(--text);overflow:hidden;touch-action:manipulation}
 button{font:inherit;color:inherit}
 
@@ -33,6 +35,8 @@ button{font:inherit;color:inherit}
   background:linear-gradient(180deg,var(--bar),var(--bar-2));border-bottom:1px solid var(--bar-line);
   display:flex;align-items:center;gap:6px;overflow-x:auto;overflow-y:hidden;white-space:nowrap;z-index:10;scrollbar-width:none;-webkit-user-select:none;user-select:none}
 .bar::-webkit-scrollbar{display:none}
+.bar{touch-action:pan-x;overscroll-behavior:contain}   /* arrastar a barra pra cima/baixo não leva a página junto (iPad) */
+#drawer,#drivePanel,#bmPanel,#noteCard,#bmCard,#potionModal{overscroll-behavior:contain}
 .brand{font-weight:700;letter-spacing:.02em;margin-right:6px;display:flex;align-items:center;gap:6px;color:var(--lilac)}
 .brand svg{width:18px;height:18px}
 .sep{width:1px;height:28px;background:var(--bar-line);margin:0 4px;flex:none}
@@ -402,7 +406,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <div id="recent" hidden><div class="rc-title">Continuar de onde parou</div><ul></ul></div>
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
-      <p class="fine ver">versão 2026.10.31-001510-beta</p>
+      <p class="fine ver">versão 2026.10.31-001930-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -2938,6 +2942,20 @@ if ('serviceWorker' in navigator && (location.protocol === 'https:' || location.
 
 refreshButtons();
 window.__grimorio = S;   // ajuda pra depurar no console
+
+// iPad/iPhone: a página toda nunca deve rolar — só o visualizador. Se algo empurrar
+// (arrasto na barra, teclado), volta pro lugar (menos durante a digitação).
+{
+  const typing = () => !!document.activeElement?.closest?.('input,textarea,[contenteditable]');
+  const settle = () => { if (!typing() && (scrollX || scrollY || document.documentElement.scrollTop || document.body.scrollTop)){ scrollTo(0, 0); document.documentElement.scrollTop = document.body.scrollTop = 0; } };
+  addEventListener('scroll', settle, { passive:true });
+  document.addEventListener('focusout', () => setTimeout(settle, 60));
+  visualViewport?.addEventListener('resize', () => setTimeout(settle, 60));
+  visualViewport?.addEventListener('scroll', () => setTimeout(settle, 60));
+  // o Safari restaura a rolagem ao recarregar: aqui não tem o que restaurar
+  if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+  settle(); addEventListener('pageshow', settle); addEventListener('load', settle);
+}
 
 // some com o splash depois da pena escrever uma linha; um toque pula
 {
