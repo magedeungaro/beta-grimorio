@@ -191,7 +191,14 @@ button{font:inherit;color:inherit}
 .ov-note{width:26px;height:26px;transform:translate(-50%,-50%);pointer-events:auto;cursor:pointer;filter:drop-shadow(0 1px 2px rgba(0,0,0,.35));touch-action:none}
 .ov-note svg{width:100%;height:100%;display:block;overflow:visible}
 .ov-note.editing{filter:drop-shadow(0 0 3px #8b5cf6) drop-shadow(0 0 6px #8b5cf6)}
-.tool-eraser .ov-note{pointer-events:none}
+.tool-eraser .ov-note,.tool-lasso .ov-note{pointer-events:none}
+.tool-lasso .page{cursor:crosshair}
+.sel-box{position:absolute;border:1.5px dashed #7c3aed;background:rgba(139,92,246,.07);border-radius:4px;pointer-events:none;box-shadow:0 0 0 1px rgba(255,255,255,.6)}
+.sel-bar{position:absolute;left:50%;top:-44px;transform:translateX(-50%);display:flex;gap:4px;padding:4px;border-radius:12px;background:#211836;box-shadow:0 6px 18px rgba(0,0,0,.35);pointer-events:auto}
+.sel-bar.below{top:auto;bottom:-44px}
+.sel-bar button{height:32px;min-width:32px;padding:0 9px;border:none;border-radius:9px;background:transparent;color:#efeaff;font:600 12.5px/1 -apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;display:flex;align-items:center;gap:5px;cursor:pointer;white-space:nowrap}
+.sel-bar button:active{background:rgba(200,182,255,.18)}
+.sel-bar svg{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.9;stroke-linecap:round;stroke-linejoin:round}
 .ov-box{font-family:Helvetica,Arial,sans-serif;line-height:1.25;white-space:pre-wrap;overflow-wrap:break-word;touch-action:none}
 .bx-txt{min-height:1.25em}
 .tool-box .ov-box{pointer-events:auto;cursor:move;outline:1px dashed rgba(124,58,237,.55);outline-offset:1px}
@@ -343,7 +350,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <div id="recent" hidden><div class="rc-title">Continuar de onde parou</div><ul></ul></div>
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
-      <p class="fine ver">versão 2026.10.30-225231-beta</p>
+      <p class="fine ver">versão 2026.10.30-230249-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -362,6 +369,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <button class="dr-item" data-tool="text" title="Grifo (G)"><span class="slot"><svg viewBox="0 0 24 24"><rect x="3" y="14.5" width="18" height="6" rx="1.2" fill="currentColor" opacity=".35" stroke="none"/><path d="M7 4.5h10"/><path d="M12 4.5v12"/></svg></span><span class="nm">Grifo</span></button>
       <button class="dr-item" data-tool="box" title="Caixa de texto (T)"><span class="slot"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" stroke-dasharray="3 2.6"/><path d="M8 9h8M12 9v7.5"/></svg></span><span class="nm">Texto</span></button>
       <button class="dr-item" data-tool="note" title="Nota / comentário (N)"><span class="slot"><svg viewBox="0 0 24 24"><path d="M4 4.5h16v11.5h-8.5L7 20v-4H4z"/><path d="M8 8.5h8M8 12h5"/></svg></span><span class="nm">Nota</span></button>
+      <button class="dr-item" data-tool="lasso" title="Laço: selecionar e mover (V)"><span class="slot"><svg viewBox="0 0 24 24"><path d="M12 4c-4.6 0-8 2.3-8 5.4 0 3 3.2 5.2 7.4 5.4" stroke-dasharray="2.6 2.4"/><path d="M14.6 14.5c3.2-.7 5.4-2.7 5.4-5.1C20 6.3 16.6 4 12 4"/><path d="M11.4 14.8c-1 1.2-.6 3.2 1 3.6 1.3.3 1.6 1.5.9 2.6"/><path d="M14 10.5l5.5 5.5-2.4.4 1.4 2.8-1.3.6-1.4-2.8-1.8 1.5z" fill="currentColor" stroke-width="1"/></svg></span><span class="nm">Laço</span></button>
       <button class="dr-item" data-tool="eraser" title="Borracha (E)"><span class="slot"><svg viewBox="0 0 24 24"><path d="M8.5 20L3.5 15a1.5 1.5 0 0 1 0-2.1L13 3.4a1.5 1.5 0 0 1 2.1 0l5.5 5.5a1.5 1.5 0 0 1 0 2.1L11.5 20z"/><path d="M8.5 20H21"/><path d="M7 9.5l7.5 7.5"/></svg></span><span class="nm">Borracha</span></button>
     </div>
     <div class="dr-size" id="sizeRow"><span class="lbl2" id="sizeLbl">Espessura</span><input class="size" id="size" type="range"><span class="dot-wrap"><span id="sizeDot"></span></span></div>
@@ -628,6 +636,7 @@ const TOOLS = {
   text:   { name:'Grifo',       colors:HL_COLORS,     alpha:.55, size:null },
   box:    { name:'Texto',       colors:PEN_COLORS,    alpha:1,   size:{ min:7,  max:36, step:1,  val:13 } },
   note:   { name:'Nota',        colors:HL_COLORS,     alpha:1,   size:null },
+  lasso:  { name:'Laço',        colors:[],            alpha:1,   size:null },
   eraser: { name:'Borracha',    colors:[],            alpha:1,   size:{ min:6,  max:44, step:1,  val:16 } },
 };
 const INK_KEY = 'GrimorioInk';
@@ -647,8 +656,10 @@ function setTool(t){
   document.body.classList.toggle('tool-eraser', t === 'eraser');
   document.body.classList.toggle('tool-text', t === 'text');
   document.body.classList.toggle('tool-box', t === 'box');
+  document.body.classList.toggle('tool-lasso', t === 'lasso');
+  if (t !== 'lasso' && typeof clearSel === 'function') clearSel();
   $('#sizeLbl').textContent = t === 'box' ? 'Tamanho' : 'Espessura';
-  $('#btnPotion').hidden = t === 'eraser';
+  $('#btnPotion').hidden = t === 'eraser' || t === 'lasso';
   paintPotion();
   const r = TOOLS[t].size, inp = $('#size');
   $('#sizeRow').hidden = !r;
@@ -701,7 +712,7 @@ function hex2hsv(hex){
   return { h, s: mx ? d / mx : 0, v: mx };
 }
 function paintPotion(){
-  const t = S.tool === 'eraser' ? 'pen' : S.tool;
+  const t = (S.tool === 'eraser' || S.tool === 'lasso') ? 'pen' : S.tool;
   document.documentElement.style.setProperty('--potion', S.color[t]);
 }
 const PM = { h:0, s:1, v:1, tool:'pen', start:null };
@@ -744,7 +755,7 @@ function renderHist(){
   }
 }
 function openPotion(){
-  if (S.tool === 'eraser') return;
+  if (S.tool === 'eraser' || S.tool === 'lasso') return;
   PM.tool = S.tool; PM.start = S.color[PM.tool];
   Object.assign(PM, hex2hsv(PM.start));
   $('#potionFor').textContent = 'para ' + TOOLS[PM.tool].name.toLowerCase();
@@ -865,7 +876,7 @@ async function loadDoc({ id, base, marks, editable, name, restored, view, drive 
   if (S.doc) S.doc.loadingTask?.destroy?.();
   S.doc = doc; S.baseBytes = base; S.editable = editable; S.fileName = name; S.sessionId = id; S.driveFile = drive || null;
   if (S.driveFile) driveLoad().catch(() => {});
-  S.undo = []; S.redo = []; S.dirty = false; S.zoom = view?.zoom || 1;
+  clearSel(); S.undo = []; S.redo = []; S.dirty = false; S.zoom = view?.zoom || 1;
   await buildPages(marks);
   if (view?.frac){ requestAnimationFrame(() => { viewer.scrollTop = view.frac * (viewer.scrollHeight - viewer.clientHeight); scheduleVisible(); }); }
   $('#empty').hidden = true;
@@ -1378,6 +1389,7 @@ const snap = st => ({ text:st.text, at:[...st.at], w:st.w, fs:st.fs, color:st.co
 
 function renderOverlays(pg){
   if (!pg.vp) return;
+  if (sel && sel.pg === pg) renderSelection();
   const list = pg.strokes.filter(isOv);
   if (editing?.pg === pg && !list.includes(editing.st)) list.push(editing.st);
   if (!list.length && !pg.ov) return;
@@ -1495,6 +1507,119 @@ function moveOv(e){
   placeOverlay(a.pg, a.st);
 }
 
+
+/* ---------- laço: selecionar, mover e apagar marcações ---------- */
+// Contorna os desenhos → ficam selecionados (traços, marca-texto livre, caixas e notas;
+// grifos ficam presos ao texto e não entram). Arrastar dentro da seleção move tudo.
+var sel = null;   // { pg, items:[stroke…] } (var: setTool roda antes desta linha)
+const selectable = st => st.kind !== 'text';
+function translateMark(st, dx, dy){
+  if (st.pts){ for (const q of st.pts){ q[0] += dx; q[1] += dy; } delete st._sm; }
+  if (st.at){ st.at = [st.at[0] + dx, st.at[1] + dy]; }
+}
+function markBounds(st){
+  if (st.kind === 'note') return [st.at[0] - 10, st.at[1] - 10, st.at[0] + 10, st.at[1] + 10];
+  if (st.kind === 'box'){ const h = st._h || st.fs * 1.25 + 2 * BOX_PAD; return [st.at[0], st.at[1] - h, st.at[0] + st.w, st.at[1]]; }
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const [x, y, w] of st.pts){ const h = w / 2; x0 = Math.min(x0, x - h); y0 = Math.min(y0, y - h); x1 = Math.max(x1, x + h); y1 = Math.max(y1, y + h); }
+  return [x0, y0, x1, y1];
+}
+function selBounds(){
+  let b = null;
+  for (const st of sel.items){ const m = markBounds(st); b = b ? [Math.min(b[0], m[0]), Math.min(b[1], m[1]), Math.max(b[2], m[2]), Math.max(b[3], m[3])] : m; }
+  return b;
+}
+function inPoly(poly, x, y){
+  let inside = false;
+  for (let i = 0, j = poly.length - 1; i < poly.length; j = i++){
+    const [xi, yi] = poly[i], [xj, yj] = poly[j];
+    if ((yi > y) !== (yj > y) && x < (xj - xi) * (y - yi) / (yj - yi) + xi) inside = !inside;
+  }
+  return inside;
+}
+function caught(poly, st){
+  if (st.kind === 'note') return inPoly(poly, st.at[0], st.at[1]);
+  if (st.kind === 'box'){ const b = markBounds(st); return inPoly(poly, (b[0] + b[2]) / 2, (b[1] + b[3]) / 2); }
+  let n = 0; for (const [x, y] of st.pts) if (inPoly(poly, x, y)) n++;
+  return n >= Math.max(1, st.pts.length * .5);   // metade do traço dentro do laço
+}
+function clearSel(){
+  if (!sel) return;
+  sel.pg.selEl?.remove(); sel.pg.selEl = null; sel = null;
+}
+function renderSelection(){
+  if (!sel) return;
+  const pg = sel.pg; if (!pg.vp) return;
+  if (!pg.ov){ pg.ov = document.createElement('div'); pg.ov.className = 'ov-layer'; pg.el.appendChild(pg.ov); }
+  let el = pg.selEl;
+  if (!el){
+    el = pg.selEl = document.createElement('div'); el.className = 'sel-box';
+    el.innerHTML = '<div class="sel-bar"><button data-act="del" title="Apagar seleção"><svg viewBox="0 0 24 24"><path d="M4 7h16M10 11v6M14 11v6M6 7l1 13h10l1-13M9 7V4h6v3"/></svg>Apagar</button><button data-act="off" title="Desmarcar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button></div>';
+    el.querySelector('[data-act=del]').onclick = deleteSel;
+    el.querySelector('[data-act=off]').onclick = clearSel;
+  }
+  if (el.parentNode !== pg.ov) pg.ov.appendChild(el);
+  const b = selBounds(), pad = 6;
+  const c = [[b[0], b[1]], [b[2], b[3]]].map(([x, y]) => pg.vp.convertToViewportPoint(x, y));
+  const L = Math.min(c[0][0], c[1][0]) - pad, T = Math.min(c[0][1], c[1][1]) - pad;
+  const W = Math.abs(c[1][0] - c[0][0]) + 2 * pad, H = Math.abs(c[1][1] - c[0][1]) + 2 * pad;
+  Object.assign(el.style, { left:L + 'px', top:T + 'px', width:W + 'px', height:H + 'px' });
+  el.querySelector('.sel-bar').classList.toggle('below', T < 50);
+}
+function deleteSel(){
+  if (!sel) return;
+  const pg = sel.pg, removed = [];
+  for (let i = pg.strokes.length - 1; i >= 0; i--) if (sel.items.includes(pg.strokes[i])){ removed.push({ pg, stroke:pg.strokes[i], index:i }); pg.strokes.splice(i, 1); }
+  clearSel();
+  if (removed.length){ S.undo.push({ type:'erase', items:removed }); S.redo = []; S.dirty = true; drawInk(pg); refreshButtons(); scheduleSave(); toast(`${removed.length} ${removed.length === 1 ? 'marcação apagada' : 'marcações apagadas'}`); }
+}
+function startLasso(e, pg){
+  const [x, y] = toPdf(pg, e.clientX, e.clientY);
+  if (sel && sel.pg === pg){
+    const b = selBounds(), pad = 10 / pg.vp.scale;
+    if (x >= b[0] - pad && x <= b[2] + pad && y >= b[1] - pad && y <= b[3] + pad){
+      active = { kind:'move', id:e.pointerId, type:e.pointerType, pg, x0:x, y0:y, dx:0, dy:0 };
+      return;
+    }
+  }
+  clearSel();
+  if (!attachLive(pg, 1)) return;
+  active = { kind:'lasso', id:e.pointerId, type:e.pointerType, pg, poly:[[x, y]] };
+}
+function moveLasso(e){
+  const a = active, pg = a.pg, [x, y] = toPdf(pg, e.clientX, e.clientY);
+  if (a.kind === 'move'){
+    const dx = x - a.x0, dy = y - a.y0, ddx = dx - a.dx, ddy = dy - a.dy;
+    if (!ddx && !ddy) return;
+    for (const st of sel.items) translateMark(st, ddx, ddy);
+    a.dx = dx; a.dy = dy;
+    if (!a.raf) a.raf = requestAnimationFrame(() => { a.raf = 0; drawInk(pg); renderSelection(); });
+    return;
+  }
+  const last = a.poly[a.poly.length - 1];
+  if (Math.hypot(x - last[0], y - last[1]) * pg.vp.scale < 2) return;
+  a.poly.push([x, y]);
+  clearLive();
+  const ctx = live.getContext('2d'); ctx.setTransform(pg.dpr, 0, 0, pg.dpr, 0, 0);
+  ctx.beginPath();
+  a.poly.forEach(([px, py], i) => { const [vx, vy] = pg.vp.convertToViewportPoint(px, py); i ? ctx.lineTo(vx, vy) : ctx.moveTo(vx, vy); });
+  ctx.fillStyle = 'rgba(139,92,246,.08)'; ctx.fill();
+  ctx.setLineDash([5, 4]); ctx.lineWidth = 1.6; ctx.strokeStyle = '#7c3aed'; ctx.stroke(); ctx.setLineDash([]);
+}
+function endLasso(a){
+  if (a.kind === 'move'){
+    if (a.raf){ cancelAnimationFrame(a.raf); a.raf = 0; }
+    drawInk(a.pg); renderSelection();
+    if (a.dx || a.dy){ S.undo.push({ type:'move', pg:a.pg, items:[...sel.items], dx:a.dx, dy:a.dy }); S.redo = []; S.dirty = true; refreshButtons(); scheduleSave(); }
+    return;
+  }
+  clearLive();
+  if (a.poly.length < 3) return;
+  const items = a.pg.strokes.filter(st => selectable(st) && caught(a.poly, st));
+  if (!items.length){ toast('Nada dentro do laço — contorne os desenhos que quer mover'); return; }
+  sel = { pg:a.pg, items }; renderSelection();
+}
+
 /* ---------- entrada: caneta, mouse, dedo ---------- */
 const touches = new Map();     // pointerId → {x,y}
 const ignored = new Set();     // toques ignorados (palma enquanto a caneta escreve)
@@ -1511,7 +1636,8 @@ function toPdf(pg, cx, cy){
 
 function startStroke(e, pg){
   const erasing = S.tool === 'eraser' || (e.pointerType === 'pen' && (e.buttons & 32));
-  if (erasing){ active = { kind:'erase', id:e.pointerId, type:e.pointerType, pg, removed:[] }; eraseAt(e); return; }
+  if (erasing){ clearSel(); active = { kind:'erase', id:e.pointerId, type:e.pointerType, pg, removed:[] }; eraseAt(e); return; }
+  if (S.tool === 'lasso') return startLasso(e, pg);
   let tool = S.tool;
   if (tool === 'text'){
     const [x, y] = toPdf(pg, e.clientX, e.clientY);
@@ -1573,6 +1699,7 @@ function commit(pg, mark){
 function endStroke(){
   const a = active; active = null;
   if (!a) return;
+  if (a.kind === 'lasso' || a.kind === 'move'){ endLasso(a); return; }
   if (a.kind === 'ov'){
     if (!a.moved){ if (editing?.st !== a.st) beginEdit(a.pg, a.st, false); }
     else if (editing?.st !== a.st){ S.undo.push({ type:'edit', pg:a.pg, stroke:a.st, before:a.before, after:snap(a.st) }); S.redo = []; S.dirty = true; }
@@ -1591,7 +1718,7 @@ function endStroke(){
   }
   refreshButtons(); scheduleSave();
 }
-function cancelStroke(){ if (active?.kind === 'erase' || active?.kind === 'ov' || active?.kind === 'rz') return endStroke(); clearLive(); active = null; }
+function cancelStroke(){ if (['erase', 'ov', 'rz', 'lasso', 'move'].includes(active?.kind)) return endStroke(); clearLive(); active = null; }
 
 function eraseAt(e){
   const a = active, pg = a.pg, [x, y] = toPdf(pg, e.clientX, e.clientY);
@@ -1668,7 +1795,8 @@ function fling(){
 
 viewer.addEventListener('pointerdown', e => {
   if (!S.doc) return;
-  const ovEl = S.tool !== 'eraser' && e.target.closest('.ov-item');
+  if (e.target.closest('.sel-bar')) return;   // botões da seleção
+  const ovEl = S.tool !== 'eraser' && S.tool !== 'lasso' && e.target.closest('.ov-item');
   if (ovEl){   // tocou numa caixa/nota: abre, arrasta ou muda a largura
     if (e.target.closest('textarea,.bx-del') || active || (e.pointerType === 'mouse' && e.button !== 0)) return;
     const st = ovEl._st, pg = ovEl._pg;
@@ -1721,6 +1849,7 @@ viewer.addEventListener('pointermove', e => {
   if (!active || active.id !== e.pointerId) return;
   if (e.pointerType === 'pen') lastPenAt = performance.now();
   if (active.kind === 'ov' || active.kind === 'rz') return moveOv(e);
+  if (active.kind === 'lasso' || active.kind === 'move') return moveLasso(e);
   if (active.kind === 'place'){ if (Math.hypot(e.clientX - active.x, e.clientY - active.y) > 10) active.ok = false; return; }
   const evs = e.getCoalescedEvents?.() || [];
   if (active.kind === 'text') return moveText(e);
@@ -1760,16 +1889,20 @@ viewer.addEventListener('contextmenu', e => e.preventDefault());
 /* ---------- desfazer / refazer ---------- */
 function undo(){
   if (editing) finishEdit();
+  clearSel();
   const a = S.undo.pop(); if (!a) return;
-  if (a.type === 'edit'){ Object.assign(a.stroke, structuredClone(a.before)); renderOverlays(a.pg); }
+  if (a.type === 'move'){ for (const st of a.items) translateMark(st, -a.dx, -a.dy); drawInk(a.pg); }
+  else if (a.type === 'edit'){ Object.assign(a.stroke, structuredClone(a.before)); renderOverlays(a.pg); }
   else if (a.type === 'add'){ const i = a.pg.strokes.lastIndexOf(a.stroke); if (i >= 0) a.pg.strokes.splice(i, 1); drawInk(a.pg); }
   else { for (const it of [...a.items].reverse()) it.pg.strokes.splice(it.index, 0, it.stroke); new Set(a.items.map(i => i.pg)).forEach(drawInk); }
   S.redo.push(a); S.dirty = true; refreshButtons(); scheduleSave();
 }
 function redo(){
   if (editing) finishEdit();
+  clearSel();
   const a = S.redo.pop(); if (!a) return;
-  if (a.type === 'edit'){ Object.assign(a.stroke, structuredClone(a.after)); renderOverlays(a.pg); }
+  if (a.type === 'move'){ for (const st of a.items) translateMark(st, a.dx, a.dy); drawInk(a.pg); }
+  else if (a.type === 'edit'){ Object.assign(a.stroke, structuredClone(a.after)); renderOverlays(a.pg); }
   else if (a.type === 'add'){ a.pg.strokes.push(a.stroke); drawInk(a.pg); }
   else { for (const it of a.items){ const i = it.pg.strokes.indexOf(it.stroke); if (i >= 0) it.pg.strokes.splice(i, 1); } new Set(a.items.map(i => i.pg)).forEach(drawInk); }
   S.undo.push(a); S.dirty = true; refreshButtons(); scheduleSave();
@@ -1790,8 +1923,9 @@ addEventListener('keydown', e => {
   if (!$('#potionModal').hidden) return;
   if (k === 'c'){ openPotion(); return; }
   if (k === ' ' && S.doc){ e.preventDefault(); openDrawer(); return; }
-  if (k === 'escape'){ openDrawer(false); return; }
-  const keyTool = { p:'pen', l:'pencil', h:'hl', g:'text', t:'box', n:'note', e:'eraser' }[k];
+  if (k === 'escape'){ openDrawer(false); clearSel(); return; }
+  if ((k === 'delete' || k === 'backspace') && sel){ e.preventDefault(); deleteSel(); return; }
+  const keyTool = { p:'pen', l:'pencil', h:'hl', g:'text', t:'box', n:'note', v:'lasso', e:'eraser' }[k];
   if (keyTool) setTool(keyTool);
   else if (k === '+' || k === '=') setZoom(S.zoom * 1.25); else if (k === '-') setZoom(S.zoom / 1.25);
 });
