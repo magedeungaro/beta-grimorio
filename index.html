@@ -147,6 +147,16 @@ button{font:inherit;color:inherit}
 .nb-paper.on,.nb-seg button.on{border-color:var(--lilac);background:rgba(139,92,246,.28)}
 .nb-seg{display:flex;gap:6px;flex-wrap:wrap}
 .nb-seg button{flex:1;min-width:0;padding:7px 6px;border-radius:12px;border:1.5px solid transparent;background:rgba(139,92,246,.10);color:var(--text);font:inherit;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;gap:6px}
+.nb-covers{display:flex;gap:8px;flex-wrap:wrap}
+.nb-cov{width:34px;height:44px;padding:0;border-radius:3px 7px 7px 3px;border:0;cursor:pointer;position:relative;box-shadow:0 2px 5px rgba(0,0,0,.4);background:var(--cv)}
+.nb-cov::before{content:"";position:absolute;left:0;top:0;bottom:0;width:6px;border-radius:3px 0 0 3px;background:rgba(0,0,0,.28)}
+.nb-cov::after{content:"";position:absolute;left:11px;right:5px;top:6px;bottom:6px;border:1px solid rgba(234,217,168,.7);border-radius:1px}
+.nb-cov.light::after{border-color:rgba(0,0,0,.3)}
+.nb-cov.on{outline:2.5px solid var(--lilac);outline-offset:2px}
+.nb-cov.none{background:transparent;border:1.5px dashed rgba(196,167,255,.55);box-shadow:none;color:var(--muted);font-size:10px;line-height:1.1}
+.nb-cov.none::before,.nb-cov.none::after,.nb-cov.pot::before,.nb-cov.pot::after{display:none}
+.nb-cov.pot{background:conic-gradient(#f87171,#facc15,#4ade80,#38bdf8,#a78bfa,#f472b6,#f87171);display:flex;align-items:center;justify-content:center}
+.nb-cov.pot svg{width:20px;height:20px;fill:none;stroke:#fff;stroke-width:2;filter:drop-shadow(0 1px 1px rgba(0,0,0,.5))}
 .nb-tone{width:14px;height:14px;border-radius:50%;box-shadow:0 0 0 1px rgba(0,0,0,.35)}
 .nb-row{display:flex;gap:8px;justify-content:flex-end;margin-top:16px}
 .add-page{display:flex;align-items:center;justify-content:center;gap:8px;margin:0 auto 18px;height:64px;border-radius:14px;border:2px dashed rgba(124,58,237,.45);
@@ -425,7 +435,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <div id="recent" hidden><div class="rc-title">Continuar de onde parou</div><ul></ul></div>
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
-      <p class="fine ver">versão 2026.10.31-005413-beta</p>
+      <p class="fine ver">versão 2026.10.31-010149-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -493,6 +503,8 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
     <div class="pm-title">✦ Novo caderno ✦<small>Um PDF em branco pra você escrever e desenhar</small></div>
     <div class="nb-lbl">Nome</div>
     <input id="nbName" maxlength="80" autocomplete="off" readonly>
+    <div class="nb-lbl">Capa</div>
+    <div class="nb-covers" id="nbCovers"></div>
     <div class="nb-lbl">Papel</div>
     <div class="nb-papers" id="nbPapers"></div>
     <div class="nb-lbl">Cor do papel</div>
@@ -852,6 +864,7 @@ function syncPotion(fromHex){
   const hex = hsv2hex(PM.h, PM.s, PM.v);
   S.color[PM.tool] = hex; paintPotion();
   if (PM.tool === 'ribbon') setRibbonColor(hex);
+  if (PM.tool === 'cover'){ NB.cover = hex; renderNbModal(); }
   if (editing && editing.st.tool === PM.tool){ editing.st.color = hex; placeOverlay(editing.pg, editing.st); $('#noteCard').style.setProperty('--nc', hex); }
   const a = PM.h * Math.PI / 180, mark = $('#wheelMark');
   mark.style.left = (12.67 + 74.67 * (.5 + Math.cos(a) * PM.s / 2)) + '%';
@@ -874,7 +887,7 @@ function openPotion(t){
   if (t === 'eraser' || t === 'lasso') return;
   PM.tool = t; PM.start = S.color[PM.tool];
   Object.assign(PM, hex2hsv(PM.start));
-  $('#potionFor').textContent = 'para ' + (TOOLS[PM.tool]?.name || 'a fita').toLowerCase();
+  $('#potionFor').textContent = 'para ' + (TOOLS[PM.tool]?.name || (t === 'cover' ? 'a capa' : 'a fita')).toLowerCase();
   $('#potionV').value = PM.v;
   $('#potionModal').hidden = false;
   drawWheel(); syncPotion();
@@ -1069,10 +1082,63 @@ function addPaperPages(doc, pp, n){
     page.node.addContentStream(ctx.register(ctx.flateStream('q /GrimPaper Do Q\n')));
   }
 }
-async function makeNotebook(pp, n, title){
+async function addCover(doc, pp, color, title){
+  const { rgb } = window.PDFLib, [, w, h] = PAPER_SIZES[pp.size];
+  const C = hex => { const [r, g, b] = hexToRgb(hex); return rgb(r, g, b); };
+  const mix = (hex, to, t) => { const a = hexToRgb(hex), b = hexToRgb(to); return rgb(...a.map((v, i) => v + (b[i] - v) * t)); };
+  const light = lum(color) > .55, accent = light ? mix(color, '#000000', .62) : C('#ead9a8'), ink = light ? mix(color, '#000000', .78) : C('#f6ecd2');
+  const page = doc.addPage([w, h]);
+  page.drawRectangle({ x:0, y:0, width:w, height:h, color:C(color) });
+  page.drawRectangle({ x:0, y:0, width:w * .065, height:h, color:mix(color, '#000000', .3) });           // lombada
+  page.drawRectangle({ x:w * .065, y:0, width:1.2, height:h, color:mix(color, '#000000', .45) });
+  const L = w * .14, R = w * .92, B = h * .06, T = h * .94, cx = (L + R) / 2;
+  page.drawRectangle({ x:L, y:B, width:R - L, height:T - B, borderColor:accent, borderWidth:1.3 });
+  page.drawRectangle({ x:L + 5, y:B + 5, width:R - L - 10, height:T - B - 10, borderColor:accent, borderWidth:.5 });
+  // estrelinhas nos cantos (svg: y pra baixo a partir do ponto dado)
+  const svg = (d, x, y, sc, o) => page.drawSvgPath(d, { x, y, scale:sc, ...o });
+  for (const [x, y] of [[L, B], [R, B], [L, T], [R, T]]){
+    page.drawCircle({ x, y, size:7.5, color:C(color) });
+    svg(star4D(0, 0, 10), x, y, .72, { color:accent });
+  }
+  // lua + estrelas
+  const u = (R - L) / 100;
+  const moon = 'M56 8 C32 9 12 28 12 52 C12 76 32 94 56 94 C64 94 72 92 78 88 C58 84 44 70 44 51 C44 32 58 17 78 13 C72 10 64 8 56 8 Z';
+  // título
+  const font = await doc.embedFont(StandardFonts.TimesRomanBold), cs = new Set(font.getCharacterSet());
+  const clean = [...title].filter(ch => cs.has(ch.codePointAt(0))).join('').trim() || 'Caderno';
+  const maxW = (R - L) * .8;
+  let fs = Math.min(w * .085, 44), lines;
+  for (;;){
+    lines = []; let cur = '';
+    for (const word of clean.split(/\s+/)){
+      const t = cur ? cur + ' ' + word : word;
+      if (font.widthOfTextAtSize(t, fs) <= maxW || !cur) cur = t; else { lines.push(cur); cur = word; }
+    }
+    lines.push(cur);
+    if ((lines.length <= 3 && lines.every(l => font.widthOfTextAtSize(l, fs) <= maxW)) || fs < 12) break;
+    fs *= .9;
+  }
+  let y = h * .5 + (lines.length - 1) * fs * .6;
+  // lua + estrelas logo acima do título (svg: y pra baixo a partir do topo)
+  const ms = .26 * u, top = y + fs * .8 + h * .045 + 94 * ms;
+  svg(moon, cx - 50 * ms, top, ms, { color:accent });
+  svg(star4D(0, 0, 10), cx + 34 * ms, top - 30 * ms, 1.1 * ms, { color:accent });
+  svg(star4D(0, 0, 10), cx + 48 * ms, top - 62 * ms, .6 * ms, { color:accent });
+  for (const l of lines){ page.drawText(l, { x:cx - font.widthOfTextAtSize(l, fs) / 2, y, size:fs, font, color:ink }); y -= fs * 1.2; }
+  // divisória com losango
+  const dy = y + fs * .35;
+  page.drawLine({ start:{ x:cx - 26 * u, y:dy }, end:{ x:cx - 4 * u, y:dy }, thickness:.8, color:accent });
+  page.drawLine({ start:{ x:cx + 4 * u, y:dy }, end:{ x:cx + 26 * u, y:dy }, thickness:.8, color:accent });
+  svg(star4D(0, 0, 10), cx, dy, .28 * u, { color:accent });
+  const d = new Date(), date = `${String(d.getDate()).padStart(2, '0')} · ${String(d.getMonth() + 1).padStart(2, '0')} · ${d.getFullYear()}`;
+  const df = await doc.embedFont(StandardFonts.TimesRomanItalic), ds = Math.max(8, w * .022);
+  page.drawText(date, { x:cx - df.widthOfTextAtSize(date, ds) / 2, y:B + 22, size:ds, font:df, color:accent });
+}
+async function makeNotebook(pp, n, title, cover){
   const doc = await PDFDocument.create();
   doc.setTitle(title); doc.setCreator('Grimório'); doc.setProducer('Grimório');
   doc.catalog.set(PDFName.of('GrimorioPaper'), PDFString.of(paperStr(pp)));
+  if (cover) await addCover(doc, pp, cover, title);
   addPaperPages(doc, pp, n);
   return doc.save();
 }
@@ -1081,7 +1147,8 @@ function readPaper(doc){
   try { return parsePaper(v?.decodeText ? v.decodeText() : null); } catch { return null; }
 }
 
-const NB = (() => { try { return { kind:'ruled', size:'a5', tone:'cream', n:10, ...JSON.parse(localStorage.getItem('grimorio.nb') || '{}') }; } catch { return { kind:'ruled', size:'a5', tone:'cream', n:10 }; } })();
+const COVER_COLORS = ['#4c1d95', '#1e1b4b', '#17131f', '#6b1d2f', '#1f3d2b', '#0f3b4c', '#c4b5fd', '#f9a8d4', '#efe4cc'];
+const NB = (() => { try { return { kind:'ruled', size:'a5', tone:'cream', n:10, cover:'#4c1d95', ...JSON.parse(localStorage.getItem('grimorio.nb') || '{}') }; } catch { return { kind:'ruled', size:'a5', tone:'cream', n:10, cover:'#4c1d95' }; } })();
 function paperThumb(kind, tone){
   const [, bg, line] = PAPER_TONES[tone];
   let g = '';
@@ -1090,7 +1157,12 @@ function paperThumb(kind, tone){
   if (kind === 'dots') for (let y = 8; y < 78; y += 6) for (let x = 8; x < 56; x += 6) g += `<circle cx="${x}" cy="${y}" r=".9" fill="${line}"/>`;
   return `<svg viewBox="0 0 60 80"><rect width="60" height="80" fill="${bg}"/>${g}</svg>`;
 }
+const lum = hex => { const [r, g, b] = hexToRgb(hex); return .2126 * r + .7152 * g + .0722 * b; };
 function renderNbModal(){
+  const custom = NB.cover && !COVER_COLORS.includes(NB.cover) ? [NB.cover] : [];
+  $('#nbCovers').innerHTML = `<button class="nb-cov none${NB.cover ? '' : ' on'}" data-k="" title="Sem capa">sem<br>capa</button>`
+    + [...COVER_COLORS, ...custom].map(c => `<button class="nb-cov${lum(c) > .55 ? ' light' : ''}${NB.cover === c ? ' on' : ''}" data-k="${c}" style="--cv:${c}" title="${c}"></button>`).join('')
+    + '<button class="nb-cov pot" data-k="pot" title="Outra cor (caldeirão)"><svg viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg></button>';
   $('#nbPapers').innerHTML = Object.entries(PAPERS).map(([k, nm]) => `<button class="nb-paper${NB.kind === k ? ' on' : ''}" data-k="${k}">${paperThumb(k, NB.tone)}${nm}</button>`).join('');
   $('#nbTones').innerHTML = Object.entries(PAPER_TONES).map(([k, [nm, bg]]) => `<button class="${NB.tone === k ? 'on' : ''}" data-k="${k}"><span class="nb-tone" style="background:${bg}"></span>${nm}</button>`).join('');
   $('#nbSizes').innerHTML = Object.entries(PAPER_SIZES).map(([k, [nm]]) => `<button class="${NB.size === k ? 'on' : ''}" data-k="${k}">${nm}</button>`).join('');
@@ -1108,6 +1180,11 @@ function nbModal(open){
 $('#btnNew').onclick = $('#btnNew2').onclick = () => { if (editing) finishEdit(); nbModal(true); };
 $('#nbName').addEventListener('click', e => { if (e.target.readOnly){ e.target.readOnly = false; e.target.focus(); e.target.select(); } });
 $('#nbPapers').onclick = e => { const b = e.target.closest('button'); if (b){ NB.kind = b.dataset.k; renderNbModal(); } };
+$('#nbCovers').onclick = e => {
+  const b = e.target.closest('button'); if (!b) return;
+  if (b.dataset.k === 'pot'){ S.color.cover = NB.cover || '#4c1d95'; openPotion('cover'); return; }
+  NB.cover = b.dataset.k; renderNbModal();
+};
 $('#nbTones').onclick = e => { const b = e.target.closest('button'); if (b){ NB.tone = b.dataset.k; renderNbModal(); } };
 $('#nbSizes').onclick = e => { const b = e.target.closest('button'); if (b){ NB.size = b.dataset.k; renderNbModal(); } };
 $('#nbCount').onclick = e => { const b = e.target.closest('button'); if (b){ NB.n = +b.dataset.k; renderNbModal(); } };
@@ -1120,10 +1197,10 @@ $('#nbOk').onclick = async () => {
   toast('Costurando o caderno…', 60000);
   try {
     const pp = { kind:NB.kind, size:NB.size, tone:NB.tone };
-    const bytes = await makeNotebook(pp, NB.n, title);
+    const bytes = await makeNotebook(pp, NB.n, title, NB.cover);
     await loadDoc({ id:fileId(bytes), base:bytes, marks:new Map(), editable:true, name:title + '.pdf', restored:false, drive:null, bookmarks:new Map(), paper:pp });
     const adj = { ruled:'pautada', dots:'pontilhada', grid:'quadriculada', blank:'lisa' }[pp.kind];
-    toast(`Caderno pronto ✦ ${NB.n} página${NB.n > 1 ? 's' : ''} ${adj}${NB.n > 1 ? 's' : ''}`);
+    toast(`Caderno pronto ✦ ${NB.cover ? 'capa + ' : ''}${NB.n} página${NB.n > 1 ? 's' : ''} ${adj}${NB.n > 1 ? 's' : ''}`);
   } catch (err){ console.error(err); toast('Não consegui criar o caderno 😕'); }
   refreshButtons();
 };
@@ -2752,8 +2829,8 @@ $('#btnUndo').onclick = undo; $('#btnRedo').onclick = redo;
 addEventListener('keydown', e => {
   const mod = e.metaKey || e.ctrlKey, k = (e.key || '').toLowerCase();
   if (!k || e.isComposing) return;   // o iPad (Rabiscar, ditado) manda eventos de teclado sem tecla
-  if (!$('#nbModal').hidden){ if (k === 'escape'){ e.preventDefault(); nbModal(false); } return; }
   if (!$('#potionModal').hidden && (k === 'escape' || (k === 'enter' && !mod))){ e.preventDefault(); closePotion(); return; }
+  if (!$('#nbModal').hidden){ if (k === 'escape'){ e.preventDefault(); nbModal(false); } return; }
   if (editing && k === 'escape'){ e.preventDefault(); finishEdit(); return; }
   if (editing && !mod) return;   // escrevendo: letras não trocam de ferramenta
   if (e.target.closest?.('input,textarea')) return;
