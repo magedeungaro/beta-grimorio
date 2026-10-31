@@ -396,7 +396,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <div id="recent" hidden><div class="rc-title">Continuar de onde parou</div><ul></ul></div>
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
-      <p class="fine ver">versão 2026.10.31-000232-beta</p>
+      <p class="fine ver">versão 2026.10.31-000549-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -756,7 +756,8 @@ addEventListener('pointerdown', e => {
     if (e.target.closest('#viewer')){ e.stopPropagation(); e.preventDefault(); }   // fechar a gaveta não risca a página
   }
 }, true);
-document.querySelectorAll('#tools .dr-item').forEach(b => b.onclick = () => { setTool(b.dataset.tool); setTimeout(() => openDrawer(false), 220); });
+// a gaveta fecha ao escolher a ferramenta, menos no carimbo (aí ainda falta escolher qual)
+document.querySelectorAll('#tools .dr-item').forEach(b => b.onclick = () => { setTool(b.dataset.tool); if (b.dataset.tool !== 'stamp') setTimeout(() => openDrawer(false), 220); });
 
 /* ---------- caldeirão de cores ---------- */
 // Roda HSV: ângulo = matiz, raio = saturação; "intensidade" = brilho.
