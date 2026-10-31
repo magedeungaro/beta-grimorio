@@ -355,7 +355,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <div id="recent" hidden><div class="rc-title">Continuar de onde parou</div><ul></ul></div>
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
-      <p class="fine ver">versão 2026.10.30-230838-beta</p>
+      <p class="fine ver">versão 2026.10.30-231738-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -1013,6 +1013,8 @@ async function extractMarks(bytes){
 
 function num(doc, v, dflt){ v = doc.context.lookup(v); return v instanceof PDFNumber ? v.asNumber() : dflt; }
 function annotColor(doc, d, dflt){
+  const exact = annotText(doc, d, 'GrimorioColor');   // cor exata (o /C do PDF arredonda)
+  if (/^#[0-9a-f]{6}$/i.test(exact)) return exact.toLowerCase();
   const C = doc.context.lookup(d.get(PDFName.of('C')));
   if (!(C instanceof PDFArray) || C.size() !== 3) return dflt;
   return '#' + [0, 1, 2].map(i => Math.round(Math.max(0, Math.min(1, num(doc, C.get(i), 0))) * 255).toString(16).padStart(2, '0')).join('');
@@ -1032,10 +1034,10 @@ function inkToStrokes(doc, d){
   let tool = annotName(doc, d, 'GrimorioTool');
   if (!TOOLS[tool] || tool === 'text' || tool === 'eraser') tool = alpha < 1 ? 'hl' : 'pen';
   const out = [];
-  const txt = annotText(doc, d, INK_KEY);
-  if (txt.startsWith('v1|')){
-    const pts = txt.slice(3).split(';').map(t => t.split(',').map(Number)).filter(p => p.length === 3 && p.every(Number.isFinite));
-    if (pts.length) out.push({ kind:'ink', tool, color, alpha, pts });
+  const txt = annotText(doc, d, INK_KEY), gid = annotText(doc, d, 'GrimorioGroup') || newGid();
+  const parse = t => t.split(';').map(q => q.split(',').map(Number)).filter(q => q.length === 3 && q.every(Number.isFinite));
+  if (txt.startsWith('v1|') || txt.startsWith('v2|')){
+    for (const part of txt.slice(3).split('/')){ const pts = parse(part); if (pts.length) out.push({ kind:'ink', tool, color, alpha, pts, gid }); }
     return out;
   }
   // Tinta de outro app: sem pressão, espessura constante.
@@ -1048,7 +1050,7 @@ function inkToStrokes(doc, d){
       if (!(path instanceof PDFArray)) continue;
       const pts = [];
       for (let m = 0; m + 1 < path.size(); m += 2) pts.push([num(doc, path.get(m), 0), num(doc, path.get(m + 1), 0), w || 1]);
-      if (pts.length) out.push({ kind:'ink', tool, color, alpha, pts });
+      if (pts.length) out.push({ kind:'ink', tool, color, alpha, pts, gid });
     }
   }
   return out;
@@ -1108,6 +1110,7 @@ async function buildPages(imported){
     const pg = { i, pdfPage, el, vp:null, pdfCanvas:null, inkCanvas:null, strokes: imported.get(i - 1) || [], gen:0, shown:-1, task:null, text:null, textP:null };
     el._pg = pg; S.pages.push(pg);
   }
+  for (const pg of S.pages) groupPage(pg);
   S.maxW = maxW;
   computeFit(); layout(); viewer.scrollTop = 0; viewer.scrollLeft = 0; scheduleVisible();
 }
@@ -1521,6 +1524,52 @@ function moveOv(e){
 }
 
 
+
+/* ---------- objetos: traços que se encostam viram um só ----------
+   Cada traço guarda um gid. Traços da mesma ferramenta que se tocam ficam com o
+   mesmo gid: o laço pega o objeto inteiro e, ao salvar, cada objeto (por cor) vira
+   uma única anotação /Ink com vários caminhos. A borracha continua por traço. */
+let gidSeq = 0;
+const newGid = () => 'g' + Date.now().toString(36) + (gidSeq++).toString(36);
+const groupable = st => st.kind === 'ink' && st.pts?.length;
+function segDist(ax, ay, bx, by, cx, cy, dx, dy){
+  // distância entre os segmentos AB e CD (0 se cruzam)
+  const cross = (px, py, qx, qy, rx, ry) => (qx - px) * (ry - py) - (qy - py) * (rx - px);
+  const d1 = cross(cx, cy, dx, dy, ax, ay), d2 = cross(cx, cy, dx, dy, bx, by), d3 = cross(ax, ay, bx, by, cx, cy), d4 = cross(ax, ay, bx, by, dx, dy);
+  if (((d1 > 0) !== (d2 > 0)) && ((d3 > 0) !== (d4 > 0))) return 0;
+  const pt = (px, py, sx, sy, ex, ey) => { const vx = ex - sx, vy = ey - sy, L = vx * vx + vy * vy, t = L ? Math.max(0, Math.min(1, ((px - sx) * vx + (py - sy) * vy) / L)) : 0; return Math.hypot(px - sx - t * vx, py - sy - t * vy); };
+  return Math.min(pt(ax, ay, cx, cy, dx, dy), pt(bx, by, cx, cy, dx, dy), pt(cx, cy, ax, ay, bx, by), pt(dx, dy, ax, ay, bx, by));
+}
+function strokesTouch(a, b){
+  const A = markBounds(a), B = markBounds(b);
+  if (A[0] > B[2] || B[0] > A[2] || A[1] > B[3] || B[1] > A[3]) return false;
+  const P = a.pts, Q = b.pts;
+  for (let i = 0; i < P.length; i++){
+    const p0 = P[Math.max(0, i - 1)], p1 = P[i];
+    for (let j = 0; j < Q.length; j++){
+      const q0 = Q[Math.max(0, j - 1)], q1 = Q[j];
+      if (segDist(p0[0], p0[1], p1[0], p1[1], q0[0], q0[1], q1[0], q1[1]) <= (p1[2] + q1[2]) / 2) return true;
+    }
+  }
+  return false;
+}
+function assignGroup(pg, st){
+  if (!groupable(st)) return;
+  const gids = [];
+  for (const o of pg.strokes) if (o !== st && groupable(o) && o.tool === st.tool && o.gid && !gids.includes(o.gid) && strokesTouch(st, o)) gids.push(o.gid);
+  st.gid = gids[0] || st.gid || newGid();
+  if (gids.length > 1) for (const o of pg.strokes) if (gids.includes(o.gid)) o.gid = gids[0];   // a ponte une os objetos
+}
+function groupPage(pg){
+  for (const st of pg.strokes) if (groupable(st) && !st.gid) st.gid = newGid();
+  // une os que se encostam (union-find simples)
+  const ink = pg.strokes.filter(groupable);
+  for (let i = 0; i < ink.length; i++) for (let j = i + 1; j < ink.length; j++){
+    const a = ink[i], b = ink[j];
+    if (a.gid !== b.gid && a.tool === b.tool && strokesTouch(a, b)){ const from = b.gid; for (const o of ink) if (o.gid === from) o.gid = a.gid; }
+  }
+}
+
 /* ---------- laço: selecionar, mover e apagar marcações ---------- */
 // Contorna os desenhos → ficam selecionados (traços, marca-texto livre, caixas e notas;
 // grifos ficam presos ao texto e não entram). Arrastar dentro da seleção move tudo.
@@ -1665,7 +1714,9 @@ function endLasso(a){
   }
   clearLive();
   if (a.poly.length < 3) return;
-  const items = a.pg.strokes.filter(st => selectable(st) && caught(a.poly, st));
+  const hit = a.pg.strokes.filter(st => selectable(st) && caught(a.poly, st));
+  const gids = new Set(hit.map(st => st.gid).filter(Boolean));
+  const items = a.pg.strokes.filter(st => hit.includes(st) || (st.gid && gids.has(st.gid)));
   if (!items.length){ toast('Nada dentro do laço — contorne os desenhos que quer mover'); return; }
   sel = { pg:a.pg, items }; renderSelection();
 }
@@ -1743,7 +1794,7 @@ function moveText(e){
   ctx.fillStyle = a.color; ctx.beginPath(); traceRects(ctx, pg, a.sel.rects); ctx.fill();
 }
 function commit(pg, mark){
-  pg.strokes.push(mark); S.undo.push({ type:'add', pg, stroke:mark }); S.redo = []; S.dirty = true;
+  pg.strokes.push(mark); assignGroup(pg, mark); S.undo.push({ type:'add', pg, stroke:mark }); S.redo = []; S.dirty = true;
   drawInk(pg);
 }
 function endStroke(){
@@ -2031,22 +2082,25 @@ function commonFields(st, page, idx){
   return {
     Type:'Annot', F:4, P:page.ref, C:[+f2(r), +f2(g), +f2(b)],
     NM:PDFString.of(`grimorio-${Date.now().toString(36)}-${idx}`), M:PDFString.of(pdfDate()),
-    GrimorioTool:PDFString.of(st.tool), GrimorioAlpha:st.alpha,
+    GrimorioTool:PDFString.of(st.tool), GrimorioAlpha:st.alpha, GrimorioColor:PDFString.of(st.color),
   };
 }
 
-function addInk(doc, page, st, idx){
-  const ctx = doc.context;
-  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, wsum = 0;
-  for (const [x, y, w] of st.pts){ const h = w / 2 + 1; x0 = Math.min(x0, x - h); y0 = Math.min(y0, y - h); x1 = Math.max(x1, x + h); y1 = Math.max(y1, y + h); wsum += w; }
+function addInk(doc, page, list, idx){
+  if (!Array.isArray(list)) list = [list];
+  const ctx = doc.context, st = list[0];
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity, wsum = 0, n = 0;
+  for (const m of list) for (const [x, y, w] of m.pts){ const h = w / 2 + 1; x0 = Math.min(x0, x - h); y0 = Math.min(y0, y - h); x1 = Math.max(x1, x + h); y1 = Math.max(y1, y + h); wsum += w; n++; }
   const rect = [x0, y0, x1, y1].map(v => +f2(v));
-  const data = 'v1|' + st.pts.map(([x, y, w]) => `${f2(x)},${f2(y)},${f2(w)}`).join(';');
+  const path = m => m.pts.map(([x, y, w]) => `${f2(x)},${f2(y)},${f2(w)}`).join(';');
+  const data = list.length === 1 ? 'v1|' + path(st) : 'v2|' + list.map(path).join('/');
   const annot = ctx.obj({
     ...commonFields(st, page, idx), Subtype:'Ink', Rect:rect,
-    InkList:[st.pts.flatMap(([x, y]) => [+f2(x), +f2(y)])],
-    BS:{ Type:'Border', W:+f2(wsum / st.pts.length), S:'S' },
-    AP:{ N:appearanceStream(ctx, st, inkAppearance(smoothOf(st)), rect) },
+    InkList:list.map(m => m.pts.flatMap(([x, y]) => [+f2(x), +f2(y)])),
+    BS:{ Type:'Border', W:+f2(wsum / n), S:'S' },
+    AP:{ N:appearanceStream(ctx, st, list.map(m => inkAppearance(smoothOf(m))).join(''), rect) },
     [INK_KEY]:PDFString.of(data),
+    ...(st.gid ? { GrimorioGroup:PDFString.of(st.gid) } : {}),
   });
   page.node.addAnnot(ctx.register(annot));
 }
@@ -2114,13 +2168,30 @@ function pdfDate(){ const d = new Date(), z = n => String(n).padStart(2, '0'); r
 async function buildPdf(){
     const doc = await PDFDocument.load(S.baseBytes, { updateMetadata:false });
     const pages = doc.getPages(); let idx = 0, font = null, charset = null;
-    for (const pg of S.pages) for (const st of pg.strokes){
+    for (const pg of S.pages){
+      // traços do mesmo objeto e com o mesmo estilo saem numa anotação só
+      const groups = new Map();
+      for (const st of pg.strokes) if (groupable(st)){
+        const key = st.gid ? `${st.gid}|${st.tool}|${st.color}|${st.alpha}` : Symbol();
+        if (!groups.has(key)) groups.set(key, []);
+        groups.get(key).push(st);
+      }
+      const done = new Set();
+      for (const st of pg.strokes){
       const page = pages[pg.i - 1];
+      if (groupable(st)){
+        if (done.has(st)) continue;
+        const key = [...groups.keys()].find(k => groups.get(k).includes(st));
+        const list = groups.get(key); list.forEach(m => done.add(m));
+        addInk(doc, page, list, idx++);
+        continue;
+      }
       if (st.kind === 'box'){
         if (!font){ font = await doc.embedFont(StandardFonts.Helvetica); charset = new Set(font.getCharacterSet()); }
         addBox(doc, page, st, idx++, font, charset);
       } else if (st.kind === 'note') addNote(doc, page, st, idx++);
       else (st.kind === 'text' ? addHighlight : addInk)(doc, page, st, idx++);
+      }
     }
     return { out: await doc.save(), n: idx };
 }
