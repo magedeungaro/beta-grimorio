@@ -277,7 +277,7 @@ button{font:inherit;color:inherit}
 :root.vela4 #candleGlow{background:#130c22}
 :root.vela4 #candleGlow i{background:radial-gradient(circle closest-side,#dccbf7 0,#b99be6 16%,#7d5fb0 34%,#3b2860 55%,#1c1331 80%,#130c22 100%)}
 /* tinta mágica: canvas próprio em cada página (rola junto, sem redesenhar), entre a luz e a sombra */
-.page canvas.magic{z-index:4;display:none}
+.page canvas.magic{z-index:4;display:none;pointer-events:none}   /* por cima da fita e das notas: não pode roubar o toque */
 /* sombra da vela misteriosa: parada na tela, transparente no círculo e escura fora — esconde a tinta longe da luz.
    É só composição na placa de vídeo: nada é redesenhado na rolagem. */
 #candleShade{position:sticky;top:0;left:0;width:100%;height:var(--vh,100%);margin-bottom:calc(-1 * var(--vh,100%));z-index:5;pointer-events:none;overflow:hidden;display:none}
@@ -514,7 +514,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.01-160312-beta</p>
+      <p class="fine ver">versão 2026.11.01-161530-beta</p>
     </div>
   </div>
   <div id="pages"></div>
