@@ -257,7 +257,7 @@ button{font:inherit;color:inherit}
   animation:candleFlicker 2.7s ease-in-out infinite;will-change:transform}
 @keyframes candleFlicker{0%{transform:scale(1)}11%{transform:scale(1.03)}23%{transform:scale(.985)}37%{transform:scale(1.015)}52%{transform:scale(.975)}
   63%{transform:scale(1.025)}77%{transform:scale(.99)}89%{transform:scale(1.035)}100%{transform:scale(1)}}
-#candle{position:fixed;z-index:7;width:44px;height:84px;margin:0;padding:0;border:0;background:none;cursor:grab;touch-action:none;display:none;
+#candle{position:fixed;z-index:7;width:84px;height:100px;margin:0;padding:0;border:0;background:none;cursor:grab;touch-action:none;display:none;
   -webkit-user-select:none;user-select:none;-webkit-touch-callout:none}
 #candle:active{cursor:grabbing}
 #candle svg{width:100%;height:100%;overflow:visible}
@@ -491,21 +491,48 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.01-041436-beta</p>
+      <p class="fine ver">versão 2026.11.01-041941-beta</p>
     </div>
   </div>
   <div id="pages"></div>
 </main>
 <input type="file" id="file" accept="application/pdf,.pdf" hidden>
 <div id="candleGlow" aria-hidden="true"><i></i></div>
-<button id="candle" title="Arraste a vela pela página" aria-label="Vela: arraste pela página"><svg viewBox="0 0 44 84">
-  <ellipse cx="22" cy="16" rx="13" ry="16" fill="#ffd27a" opacity=".25"/>
-  <path class="fl" d="M22 2c5 6 7.5 10.5 6 15-1 3-3.6 4.4-6 4.4S17 20 16 17c-1.5-4.5 1-9 6-15z" fill="#ffb347"/>
-  <path class="fl fl2" d="M22 9c2.6 3.4 3.6 5.8 2.8 8-.5 1.5-1.6 2.2-2.8 2.2s-2.3-.7-2.8-2.2c-.8-2.2.2-4.6 2.8-8z" fill="#fff3c4"/>
-  <path d="M22 21v4" stroke="#2a1d10" stroke-width="1.6" stroke-linecap="round"/>
-  <path d="M13 25h18v48H13z" fill="#f6ead2"/><path d="M13 25c2 4 4 4 5 9 .6 3 2.6 3 2.6-.5 0-2.8 2.4-3.4 3.6-.8V28c2 1.4 4.4 1 6.8-3z" fill="#fffaf0"/>
-  <path d="M16 36h2v32h-2z" fill="#fff" opacity=".6"/><path d="M28 25v48" stroke="#d9c6a2" stroke-width="2"/>
-  <ellipse cx="22" cy="75" rx="17" ry="5" fill="#b0894a"/><path d="M6 74c5-3 27-3 32 0" stroke="#e8cf8f" stroke-width="1.6" fill="none"/>
+<button id="candle" title="Arraste a vela pela página" aria-label="Vela: arraste pela página"><svg viewBox="0 0 84 100">
+  <defs>
+    <linearGradient id="slv" x1="0" x2="1"><stop offset="0" stop-color="#8d959f"/><stop offset=".22" stop-color="#eef1f4"/><stop offset=".5" stop-color="#b4bcc5"/><stop offset=".78" stop-color="#e4e8ec"/><stop offset="1" stop-color="#7c848e"/></linearGradient>
+    <linearGradient id="slvD" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#f3f5f7"/><stop offset=".55" stop-color="#b9c0c8"/><stop offset="1" stop-color="#6f7781"/></linearGradient>
+    <linearGradient id="wax" x1="0" x2="1"><stop offset="0" stop-color="#e9d9b8"/><stop offset=".35" stop-color="#fbf3e2"/><stop offset="1" stop-color="#d9c49c"/></linearGradient>
+  </defs>
+  <ellipse cx="32" cy="17" rx="14" ry="17" fill="#ffd27a" opacity=".22"/>
+  <path class="fl" d="M32 2c5 6 7.5 10.5 6 15-1 3-3.6 4.4-6 4.4S27 20 26 17c-1.5-4.5 1-9 6-15z" fill="#ffb347"/>
+  <path class="fl fl2" d="M32 9c2.6 3.4 3.6 5.8 2.8 8-.5 1.5-1.6 2.2-2.8 2.2s-2.3-.7-2.8-2.2c-.8-2.2.2-4.6 2.8-8z" fill="#fff3c4"/>
+  <path d="M32 21.5c.6 1.4.2 2.8-.4 4.2" stroke="#2a1d10" stroke-width="1.6" stroke-linecap="round" fill="none"/>
+  <!-- castiçal: alça de anel -->
+  <path d="M60 85c6-1 13-2 15-8 1.6-5-2-9.5-6.6-9-4.4.5-6.4 5-4.4 8.4" fill="none" stroke="url(#slvD)" stroke-width="4" stroke-linecap="round"/>
+  <path d="M60 85c6-1 13-2 15-8" fill="none" stroke="#f7f9fb" stroke-width="1" stroke-linecap="round" opacity=".7"/>
+  <!-- pratinho -->
+  <ellipse cx="34" cy="88" rx="30" ry="8" fill="#6f7781"/>
+  <ellipse cx="34" cy="86" rx="30" ry="7.5" fill="url(#slv)"/>
+  <ellipse cx="34" cy="85" rx="24" ry="5" fill="url(#slvD)" opacity=".9"/>
+  <path d="M12 84.5c6-3.5 38-3.5 44 0" stroke="#fff" stroke-width="1" fill="none" opacity=".75"/>
+  <!-- cera que pingou no prato -->
+  <path d="M38 84c3-.6 7-.4 8.4.8 1 .9-.6 1.8-3.4 1.9-2.6.1-5.6-.4-6-1.2-.3-.6.2-1.2 1-1.5z" fill="#f6ecd6"/>
+  <!-- copinho -->
+  <path d="M21 72h22l-2 10H23z" fill="url(#slv)"/>
+  <ellipse cx="32" cy="72" rx="12" ry="2.6" fill="url(#slvD)"/>
+  <!-- vela derretida -->
+  <path d="M24 31c0-2.6 3.4-3.6 8-3.4 4.6-.2 8 .8 8 3.4V72H24z" fill="url(#wax)"/>
+  <ellipse cx="32" cy="30" rx="7.2" ry="2.2" fill="#fffaf0"/>
+  <ellipse cx="32" cy="30" rx="3.4" ry="1" fill="#f4dfae" opacity=".8"/>
+  <path d="M24.2 30c-1.4 5-1.6 12.5-.2 17.5.9 3.2 3.6 2.6 3.4-.6-.2-3.4-.6-6 .2-9.6.7-3 .4-5.4-.6-7.6z" fill="#fff8ea" stroke="#d6bf92" stroke-width=".8"/>
+  <path d="M24 47c-.6 4 .4 7.6 2 7.6s2-2.8 1.2-6" fill="#fff8ea" stroke="#d6bf92" stroke-width=".8"/>
+  <path d="M39.8 30.6c1.2 3.6 1.4 7.4.2 9.8-1 2-3.2 1.4-3-1.2.2-2.6-.2-4.6-.8-7z" fill="#fff8ea" stroke="#d6bf92" stroke-width=".8"/>
+  <path d="M33.4 29.6c.6 3.2.4 6-.8 8-.9 1.5-2.6.9-2.4-.9.2-2-.1-4-.6-6.4z" fill="#fff8ea" stroke="#d6bf92" stroke-width=".8"/>
+  <path d="M38 40c1 3 .8 6.6-.4 8.4-.8 1.2-2.2.6-2-1 .2-2.2-.1-4.6-.8-7" fill="#f7ecd5" stroke="#d6bf92" stroke-width=".8"/>
+  <path d="M39.4 33v38" stroke="#cdb68a" stroke-width="1.4" opacity=".7"/>
+  <path d="M27 36v32" stroke="#fff" stroke-width="1.6" opacity=".55" stroke-linecap="round"/>
+  <path d="M23.6 70c2.6 1.4 14.2 1.4 16.8 0" stroke="#e8d7b2" stroke-width="1.6" fill="none"/>
 </svg></button>
 <div id="toast" role="status"></div>
 <div id="upd" hidden>✦ Versão nova do Grimório <button class="btn primary" id="updGo">Atualizar</button></div>
@@ -1062,14 +1089,14 @@ let candlePos = (() => { try { const v = JSON.parse(localStorage.getItem('grimor
 function placeCandle(){
   const r = glow.getBoundingClientRect(); if (!r.width) return;
   const x = r.left + candlePos.x * r.width, y = r.top + candlePos.y * r.height;   // ponto da chama na tela
-  candle.style.left = (x - 22) + 'px'; candle.style.top = (y - 12) + 'px';
+  candle.style.left = (x - 32) + 'px'; candle.style.top = (y - 14) + 'px';   // chama em (32, 14) no desenho
   glow.style.setProperty('--cx', (x - r.left) + 'px'); glow.style.setProperty('--cy', (y - r.top) + 'px');
 }
 let candleDrag = null;
 candle.addEventListener('pointerdown', e => {
   e.preventDefault(); e.stopPropagation();
   const r = candle.getBoundingClientRect();
-  candleDrag = { id:e.pointerId, dx:e.clientX - (r.left + 22), dy:e.clientY - (r.top + 12) };
+  candleDrag = { id:e.pointerId, dx:e.clientX - (r.left + 32), dy:e.clientY - (r.top + 14) };
   try { candle.setPointerCapture(e.pointerId); } catch {}
 });
 candle.addEventListener('pointermove', e => {
