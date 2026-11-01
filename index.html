@@ -282,8 +282,8 @@ button{font:inherit;color:inherit}
    É só composição na placa de vídeo: nada é redesenhado na rolagem. */
 #candleShade{position:sticky;top:0;left:0;width:100%;height:var(--vh,100%);margin-bottom:calc(-1 * var(--vh,100%));z-index:5;pointer-events:none;overflow:hidden;display:none}
 #candleShade i{position:absolute;left:var(--sx);top:var(--sy);width:var(--ss);height:var(--ss);
-  background:radial-gradient(circle closest-side,rgba(19,12,34,0) 0,rgba(19,12,34,0) 45%,rgba(19,12,34,.95) 100%);
-  box-shadow:0 0 0 3000px rgba(19,12,34,.95)}   /* o escuro de fora: recortado pelo contêiner, a camada fica do tamanho da tela */
+  background:radial-gradient(circle closest-side,rgba(19,12,34,0) 0,rgba(19,12,34,0) 22%,rgba(19,12,34,.08) 38%,rgba(19,12,34,.22) 52%,rgba(19,12,34,.42) 66%,rgba(19,12,34,.62) 80%,rgba(19,12,34,.78) 92%,rgba(19,12,34,.84) 100%);
+  box-shadow:0 0 0 3000px rgba(19,12,34,.84)}   /* o escuro de fora: recortado pelo contêiner, a camada fica do tamanho da tela */
 :root.has-doc.vela4 #candleShade{display:block}
 :root.vela4 .page canvas.magic{display:block}
 @media (prefers-reduced-motion:reduce){#candleGlow i,#candle .fl{animation:none}}
@@ -514,7 +514,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.01-155605-beta</p>
+      <p class="fine ver">versão 2026.11.01-160312-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -1168,7 +1168,7 @@ function placeCandle(){
   candle.style.left = (x - 32) + 'px'; candle.style.top = (y - 14) + 'px';   // chama em (32, 14) no desenho
   for (const el of [glow, shade]){ el.style.setProperty('--cx', (x - r.left) + 'px'); el.style.setProperty('--cy', (y - r.top) + 'px'); }
   // sombra: quadrado em pixels inteiros (sem aro de serrilhado na emenda com o escuro de fora)
-  const gs = parseFloat(getComputedStyle(shade).getPropertyValue('--gr')) || 1, half = Math.round(310 * gs);
+  const gs = parseFloat(getComputedStyle(shade).getPropertyValue('--gr')) || 1, half = Math.round(560 * gs);
   shade.style.setProperty('--sx', Math.round(x - r.left) - half + 'px'); shade.style.setProperty('--sy', Math.round(y - r.top) - half + 'px'); shade.style.setProperty('--ss', 2 * half + 'px');
 }
 let candleDrag = null;
