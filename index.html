@@ -500,7 +500,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.01-052028-beta</p>
+      <p class="fine ver">versão 2026.11.01-052438-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -1133,18 +1133,32 @@ function scheduleMagic(){ if (!magicRAF) magicRAF = requestAnimationFrame(render
 function renderMagic(){
   magicRAF = 0;
   if (!mystic()) return;
-  const r = magicEl.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, 2);
+  const r = magicEl.getBoundingClientRect(), d = Math.min(devicePixelRatio || 1, matchMedia('(max-width:700px)').matches ? 1.5 : 2);
   const W = Math.round(r.width * d), H = Math.round(r.height * d);
   if (magicEl.width !== W || magicEl.height !== H){ magicEl.width = W; magicEl.height = H; }
   const ctx = magicEl.getContext('2d'); ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.clearRect(0, 0, W, H);
-  ctx.fillStyle = '#f5ecff'; ctx.shadowColor = '#c026d3'; ctx.shadowBlur = 12 * d;
   for (const pg of S.pages || []){
-    if (!pg.vp || !pg.strokes.some(st => st.tool === 'magic')) continue;
+    if (!pg.vp) continue;
     const pr = pg.el.getBoundingClientRect();
     if (pr.bottom < r.top || pr.top > r.bottom) continue;
-    ctx.setTransform(d, 0, 0, d, (pr.left - r.left) * d, (pr.top - r.top) * d);
-    for (const st of pg.strokes) if (st.tool === 'magic'){ ctx.beginPath(); tracePath(ctx, pg, smoothOf(st)); ctx.fill('nonzero'); }
+    const bmp = magicBitmap(pg, d); if (!bmp) continue;
+    // na rolagem só copia a imagem pronta (o brilho é caro de desenhar)
+    ctx.drawImage(bmp, Math.round((pr.left - r.left) * d), Math.round((pr.top - r.top) * d));
   }
+}
+// imagem da tinta mágica da página, refeita só quando os traços ou o zoom mudam
+function magicBitmap(pg, d){
+  const list = pg.strokes.filter(st => st.tool === 'magic');
+  if (!list.length){ pg._magic = null; return null; }
+  const key = `${pg._magicGen || 0}|${pg.vp.scale}|${d}`;
+  if (pg._magic?.key === key) return pg._magic.c;
+  const c = pg._magic?.c || document.createElement('canvas');
+  c.width = Math.ceil(pg.vp.width * d); c.height = Math.ceil(pg.vp.height * d);
+  const ctx = c.getContext('2d'); ctx.setTransform(d, 0, 0, d, 0, 0);
+  ctx.fillStyle = '#f5ecff'; ctx.shadowColor = '#c026d3'; ctx.shadowBlur = 12 * d;
+  for (const st of list){ ctx.beginPath(); tracePath(ctx, pg, smoothOf(st)); ctx.fill('nonzero'); }
+  pg._magic = { key, c };
+  return c;
 }
 // enquanto escreve: o traço ao vivo só aparece dentro da luz (e nem aparece sem a vela misteriosa)
 function magicLive(pg){
@@ -1778,6 +1792,7 @@ async function renderPage(pg){
 }
 function unloadPage(pg){
   if (pg.task){ pg.task.cancel(); pg.task = null; }
+  if (pg._magic){ pg._magic.c.width = pg._magic.c.height = 0; pg._magic = null; }
   for (const k of ['pdfCanvas', 'hlCanvas', 'inkCanvas']) if (pg[k]){ pg[k].width = pg[k].height = 0; pg[k].remove(); pg[k] = null; }
   pg.shown = -1;
 }
@@ -1938,10 +1953,10 @@ function paintShape(ctx, pg, st){
 let scratch = null;
 function drawInk(pg){
   renderOverlays(pg);
+  pg._magicGen = (pg._magicGen || 0) + 1; scheduleMagic();
   const c = pg.inkCanvas; if (!c) return;
   const top = c.getContext('2d'), hl = pg.hlCanvas.getContext('2d');
   for (const x of [top, hl]){ x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, c.width, c.height); }
-  scheduleMagic();
   for (const st of pg.strokes){
     if (isOv(st) || st.tool === 'magic') continue;   // tinta mágica: só na camada da vela misteriosa
     const ctx = st.alpha < 1 ? hl : top;
