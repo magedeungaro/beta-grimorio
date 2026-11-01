@@ -475,7 +475,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.01-035704-beta</p>
+      <p class="fine ver">versão 2026.11.01-040515-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -1602,7 +1602,7 @@ function layout(){
 function dprFor(vp){ let d = Math.min(devicePixelRatio || 1, 2.5); while (vp.width * vp.height * d * d > 12e6) d *= .85; return d; }
 
 async function renderPage(pg){
-  if (pg.task || pg.shown === pg.gen) return;
+  if (!pg.vp || pg.task || pg.shown === pg.gen) return;   // página recém-criada ainda sem tamanho (o layout vem logo depois)
   const gen = pg.gen, vp = pg.vp, dpr = dprFor(vp);
   const c = document.createElement('canvas');
   c.width = Math.floor(vp.width * dpr); c.height = Math.floor(vp.height * dpr);
