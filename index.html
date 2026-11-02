@@ -162,39 +162,73 @@ button{font:inherit;color:inherit}
 .sc-seal.on{outline:2.5px solid var(--lilac);outline-offset:3px}
 /* ---------- oráculo ---------- */
 #oracleModal{position:fixed;inset:0;z-index:30;display:flex;align-items:center;justify-content:center;padding:16px;overscroll-behavior:contain;
-  background:rgba(15,10,26,.55);-webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);animation:pmFade .18s ease-out}
+  background:radial-gradient(ellipse at 50% 30%,rgba(76,29,149,.45),rgba(8,5,16,.82) 70%);-webkit-backdrop-filter:blur(8px);backdrop-filter:blur(8px);animation:pmFade .25s ease-out}
 #oracleModal[hidden]{display:none}
-.or-card{width:min(440px,100%)}
-.or-eye{display:block;width:64px;height:40px;margin:2px auto 4px;overflow:visible}
-.or-eye .lid{fill:none;stroke:var(--lilac);stroke-width:1.6}
+.or-card{--gold:#f2d48f;--serif:'Iowan Old Style','Palatino Linotype',Palatino,'Book Antiqua',Georgia,serif;
+  position:relative;width:min(420px,100%);max-height:calc(100dvh - 32px);overflow:auto;padding:22px 22px 18px;border-radius:28px;color:var(--text);
+  background:radial-gradient(1px 1px at 12% 18%,#fff8 50%,transparent),radial-gradient(1px 1px at 82% 12%,#fff6 50%,transparent),radial-gradient(1.5px 1.5px at 68% 34%,#fff5 50%,transparent),
+    radial-gradient(1px 1px at 28% 62%,#fff4 50%,transparent),radial-gradient(1px 1px at 90% 70%,#fff5 50%,transparent),radial-gradient(1.5px 1.5px at 8% 88%,#fff4 50%,transparent),
+    radial-gradient(ellipse 90% 45% at 50% 0%,rgba(167,139,250,.35),transparent 70%),linear-gradient(180deg,#221640,#130d24 75%);
+  border:1px solid rgba(242,212,143,.28);box-shadow:0 0 0 5px rgba(19,13,36,.6),0 0 0 6px rgba(242,212,143,.14),0 30px 80px rgba(0,0,0,.6),0 0 60px rgba(139,92,246,.25);
+  animation:orRise .45s cubic-bezier(.2,1.2,.35,1)}
+@keyframes orRise{from{opacity:0;transform:translateY(14px) scale(.96)}to{opacity:1;transform:none}}
+.or-x{position:absolute;top:12px;right:12px;width:34px;height:34px;border-radius:50%;border:0;background:transparent;color:var(--muted);cursor:pointer;display:flex;align-items:center;justify-content:center}
+.or-x:hover{color:var(--text);background:rgba(255,255,255,.06)}
+.or-x svg{width:18px;height:18px;fill:none;stroke:currentColor;stroke-width:2;stroke-linecap:round}
+.or-eye{display:block;width:96px;height:60px;margin:0 auto;overflow:visible}
+.or-eye .lid{fill:none;stroke:var(--gold);stroke-width:1.5;stroke-linecap:round}
+.or-eye .lash{stroke:var(--gold);stroke-width:1.3;stroke-linecap:round;opacity:.7}
+.or-eye .ball{transform-box:view-box;transform-origin:48px 30px;animation:orOpen .7s .1s cubic-bezier(.3,1.4,.5,1) both}
 .or-eye .iris{fill:url(#orIris);transform-box:fill-box;transform-origin:center}
-.or-eye .glow{fill:#c4b5fd;opacity:.18;transform-box:fill-box;transform-origin:center}
-.or-card.seeing .iris{animation:orLook 1.6s ease-in-out infinite}
-.or-card.seeing .glow{animation:orGlow 1.6s ease-in-out infinite}
-@keyframes orLook{0%,100%{transform:translateX(-5px)}50%{transform:translateX(5px)}}
-@keyframes orGlow{0%,100%{opacity:.12;transform:scale(.9)}50%{opacity:.45;transform:scale(1.25)}}
-.or-ask{display:flex;gap:8px;margin-top:10px}
-#orInput{flex:1;min-width:0;box-sizing:border-box;padding:10px 12px;border-radius:12px;border:1px solid var(--bar-line);background:rgba(0,0,0,.25);color:var(--text);font:inherit;font-size:16px;-webkit-user-select:text;user-select:text}
-.or-ask .btn{flex:none}
-.or-out{margin-top:12px;font-size:14px;line-height:1.45;-webkit-user-select:text;user-select:text}
+.or-eye .glow{fill:url(#orGlow);transform-box:fill-box;transform-origin:center;opacity:.55}
+.or-eye .twinkle{fill:var(--gold);transform-box:fill-box;transform-origin:center;animation:spTwinkle 2.4s ease-in-out infinite}
+.or-eye .twinkle.t2{animation-delay:.8s}.or-eye .twinkle.t3{animation-delay:1.6s}
+@keyframes orOpen{from{transform:scaleY(.06)}to{transform:none}}
+.or-card.seeing .iris{animation:orLook 1.4s ease-in-out infinite}
+.or-card.seeing .glow{animation:orGlow 1.4s ease-in-out infinite}
+@keyframes orLook{0%,100%{transform:translateX(-7px)}50%{transform:translateX(7px)}}
+@keyframes orGlow{0%,100%{opacity:.4;transform:scale(.9)}50%{opacity:1;transform:scale(1.25)}}
+.or-title{margin:4px 0 0;text-align:center;font-family:var(--serif);font-size:21px;font-weight:600;letter-spacing:.04em;color:var(--gold)}
+.or-sub{margin:2px 0 0;text-align:center;font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted)}
+.or-ask{position:relative;margin:16px 0 0}
+#orInput{-webkit-appearance:none;appearance:none;width:100%;box-sizing:border-box;padding:12px 52px 12px 18px;border-radius:999px;border:1px solid rgba(242,212,143,.3);
+  background:rgba(5,3,12,.45);box-shadow:inset 0 2px 8px rgba(0,0,0,.45);color:#fff;font-family:var(--serif);font-size:19px;text-align:center;-webkit-user-select:text;user-select:text;outline:none;transition:border-color .2s,box-shadow .2s}
+#orInput::placeholder{color:rgba(180,168,214,.55);font-style:italic}
+#orInput:focus{border-color:rgba(242,212,143,.7);box-shadow:inset 0 2px 8px rgba(0,0,0,.45),0 0 0 4px rgba(242,212,143,.1),0 0 24px rgba(167,139,250,.3)}
+#orInput::-webkit-search-cancel-button{display:none}
+#orGo{position:absolute;right:5px;top:50%;transform:translateY(-50%);width:40px;height:40px;border-radius:50%;border:0;cursor:pointer;color:#1b1030;
+  background:radial-gradient(circle at 35% 30%,#fff3cf,var(--gold) 55%,#b8893a);box-shadow:0 0 14px rgba(242,212,143,.45);display:flex;align-items:center;justify-content:center}
+#orGo svg{width:20px;height:20px;fill:currentColor}
+#orGo:disabled{opacity:.6}
+.or-out{margin-top:14px;font-size:14px;line-height:1.5;-webkit-user-select:text;user-select:text}
 .or-out:empty{display:none}
-.or-word{font-family:Georgia,'Times New Roman',serif;font-size:24px;color:#f5f3ff}
-.or-ipa{font-family:inherit;font-size:13px;color:var(--muted);margin-left:6px}
-.or-from{font-size:12px;color:var(--muted);margin-top:2px}
-.or-pt{margin:10px 0 4px;padding:9px 12px;border-radius:12px;background:rgba(139,92,246,.16);border:1px solid rgba(196,181,253,.25)}
-.or-pt b{display:block;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--lilac);margin-bottom:3px}
-.or-pt div+div{margin-top:3px}
-.or-pt small{color:var(--muted)}
-.or-pos{margin:10px 0 2px;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--lilac)}
-.or-out ol{margin:0;padding-left:20px}
-.or-out li{margin:3px 0}
-.or-out li i{display:block;color:var(--muted);font-size:12.5px}
-.or-msg{text-align:center;color:var(--muted);font-style:italic;padding:6px 0}
-.or-more{display:inline-block;margin-top:10px;font-size:12px;color:var(--lilac)}
+.or-out > *{animation:orMist .7s ease-out both}
+.or-out > :nth-child(2){animation-delay:.08s}.or-out > :nth-child(3){animation-delay:.16s}.or-out > :nth-child(4){animation-delay:.24s}.or-out > :nth-child(n+5){animation-delay:.32s}
+@keyframes orMist{from{opacity:0;filter:blur(8px);transform:translateY(6px)}to{opacity:1;filter:none;transform:none}}
+.or-head{text-align:center}
+.or-word{font-family:var(--serif);font-size:34px;line-height:1.1;color:#fff;text-shadow:0 0 18px rgba(196,181,253,.55)}
+.or-ipa{margin-top:2px;font-size:13px;color:var(--muted);letter-spacing:.02em}
+.or-from{margin-top:2px;font-family:var(--serif);font-style:italic;font-size:13px;color:var(--muted)}
+.or-orn{display:flex;align-items:center;gap:10px;margin:12px 0;color:var(--gold);font-size:11px;opacity:.75}
+.or-orn::before,.or-orn::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,transparent,rgba(242,212,143,.6),transparent)}
+.or-pt{text-align:center}
+.or-pt .lbl,.or-pos{font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);opacity:.85}
+.or-pt .sense{margin-top:6px;font-family:var(--serif);font-size:21px;line-height:1.25;color:#fff}
+.or-pt .sense small{display:block;font-family:inherit;font-style:italic;font-size:12.5px;color:var(--muted)}
+.or-pos{margin:14px 0 4px}
+.or-out ol{margin:0;padding-left:22px}
+.or-out li{margin:4px 0;color:#e9e4fb}
+.or-out li::marker{color:var(--gold);font-family:var(--serif)}
+.or-out li i{display:block;margin-top:1px;font-family:var(--serif);color:var(--muted);font-size:13.5px}
+.or-msg{text-align:center;font-family:var(--serif);font-style:italic;font-size:15px;color:var(--muted);padding:8px 0}
+.or-more{display:block;margin-top:14px;text-align:center;font-size:12px;color:var(--lilac);opacity:.8;text-decoration:none}
+.or-more:hover{opacity:1;text-decoration:underline}
 .or-past{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
-.or-past button{border:1px solid var(--bar-line);background:rgba(255,255,255,.05);color:var(--text);border-radius:999px;padding:4px 10px;font:inherit;font-size:12.5px;cursor:pointer}
-.or-note{margin:12px 2px 0;font-size:11.5px;color:var(--muted);line-height:1.4}
-@media (prefers-reduced-motion:reduce){.or-card .iris,.or-card .glow{animation:none!important}}
+.or-past .lbl{width:100%;text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);opacity:.7;margin-bottom:2px}
+.or-past button{border:1px solid rgba(242,212,143,.25);background:rgba(242,212,143,.06);color:var(--text);border-radius:999px;padding:4px 12px;font-family:var(--serif);font-size:14px;cursor:pointer}
+.or-past button:hover{background:rgba(242,212,143,.14)}
+.or-note{margin:16px 4px 0;text-align:center;font-size:11px;color:var(--muted);opacity:.75;line-height:1.4}
+@media (prefers-reduced-motion:reduce){.or-card,.or-card *,.or-out > *{animation:none!important}}
 /* ---------- estante de feitiços ---------- */
 .shelf-card{width:min(460px,100%)}
 .sh-sync{display:flex;align-items:center;gap:10px;margin-top:12px;padding:8px 8px 8px 12px;border-radius:12px;background:rgba(139,92,246,.12);font-size:12px;color:var(--muted)}
@@ -646,7 +680,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.02-160116-beta</p>
+      <p class="fine ver">versão 2026.11.02-161026-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -809,14 +843,22 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
 </div>
 <div id="unroll" hidden aria-hidden="true"><div class="ur"><div class="ur-rod"></div><div class="ur-sheet"></div><div class="ur-rod b"></div><div class="ur-rib"></div><div class="ur-seal"><b class="l"></b><b class="r"></b></div></div><div class="ur-name"></div></div>
 <div id="oracleModal" hidden>
-  <div class="pm-card nb-card or-card" role="dialog" aria-modal="true" aria-label="Oráculo">
-    <svg class="or-eye" viewBox="0 0 64 40" aria-hidden="true"><defs><radialGradient id="orIris" cx=".4" cy=".35" r=".7"><stop offset="0" stop-color="#ede9fe"/><stop offset=".35" stop-color="#a78bfa"/><stop offset="1" stop-color="#4c1d95"/></radialGradient></defs>
-      <circle class="glow" cx="32" cy="20" r="17"/><path class="lid" d="M4 20C14 5 50 5 60 20 50 35 14 35 4 20z"/><circle class="iris" cx="32" cy="20" r="8.5"/><circle cx="29.5" cy="17.5" r="1.8" fill="#fff" opacity=".85"/></svg>
-    <div class="pm-title">Consulta ao oráculo<small>sussurre uma palavra e ele revela o significado</small></div>
-    <div class="or-ask"><input id="orInput" type="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" placeholder="ex.: stalwart" aria-label="Palavra"><button class="btn primary" id="orGo">Consultar ✦</button></div>
+  <div class="or-card" role="dialog" aria-modal="true" aria-label="Oráculo">
+    <button class="or-x" id="orClose" title="Fechar (Esc)" aria-label="Fechar"><svg viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg></button>
+    <svg class="or-eye" viewBox="0 0 96 60" aria-hidden="true"><defs>
+      <radialGradient id="orIris" cx=".38" cy=".34" r=".72"><stop offset="0" stop-color="#f5f0ff"/><stop offset=".3" stop-color="#b79cff"/><stop offset=".75" stop-color="#5b21b6"/><stop offset="1" stop-color="#2e1065"/></radialGradient>
+      <radialGradient id="orGlow"><stop offset="0" stop-color="#c4b5fd" stop-opacity=".9"/><stop offset="1" stop-color="#c4b5fd" stop-opacity="0"/></radialGradient></defs>
+      <path class="lash" d="M48 4v6M31 7l3 5.5M65 7l-3 5.5M17 14l4.5 4M79 14l-4.5 4"/>
+      <g class="ball"><circle class="glow" cx="48" cy="34" r="22"/><path class="lid" d="M10 34C24 14 72 14 86 34 72 54 24 54 10 34z"/>
+        <circle class="iris" cx="48" cy="34" r="11"/><circle cx="48" cy="34" r="4" fill="#12091f" opacity=".85"/><circle cx="44.6" cy="30.4" r="2.2" fill="#fff" opacity=".9"/></g>
+      <path class="twinkle" d="M6 48l.9 2.1 2.1.9-2.1.9L6 54l-.9-2.1L3 51l2.1-.9z"/><path class="twinkle t2" d="M90 46l.8 1.8 1.8.8-1.8.8L90 51.2l-.8-1.8-1.8-.8 1.8-.8z"/><path class="twinkle t3" d="M84 4l.7 1.6 1.6.7-1.6.7L84 8.6l-.7-1.6-1.6-.7 1.6-.7z"/>
+    </svg>
+    <div class="or-title">Consulta ao oráculo</div>
+    <div class="or-sub">sussurre uma palavra e as névoas revelam</div>
+    <div class="or-ask"><input id="orInput" type="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" placeholder="sussurre aqui…" aria-label="Palavra">
+      <button id="orGo" title="Consultar" aria-label="Consultar"><svg viewBox="0 0 24 24"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg></button></div>
     <div class="or-out" id="orOut" aria-live="polite"></div>
-    <p class="or-note">Só a palavra que você sussurrar vai até o Wiktionary pra ser consultada. As respostas ficam guardadas aqui no aparelho.</p>
-    <div class="nb-row"><button class="btn" id="orClose">Fechar</button></div>
+    <p class="or-note">Só a palavra sussurrada vai até o Wiktionary. O oráculo esquece tudo quando você fecha o Grimório.</p>
   </div>
 </div>
 <div id="pwModal" hidden>
@@ -2256,11 +2298,15 @@ const Oracle = (() => {
   const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   const txt = h => new DOMParser().parseFromString(String(h || ''), 'text/html').body.textContent.replace(/\s+/g, ' ').trim();   // DOMParser: inerte, nada carrega nem roda
   const unwiki = t => t.replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').replace(/\{\{[^{}]*\}\}/g, '').replace(/'{2,}/g, '').trim();
-  const load = () => { try { return JSON.parse(localStorage.getItem(KEY)) || {}; } catch { return {}; } };
-  const keep = (k, r) => { try { const c = load(); delete c[k]; c[k] = r; const ks = Object.keys(c); for (const x of ks.slice(0, Math.max(0, ks.length - MAX))) delete c[x]; localStorage.setItem(KEY, JSON.stringify(c)); } catch {} };
+  const mem = new Map();   // só na memória: fechou o Grimório, o oráculo esquece
+  try { localStorage.removeItem(KEY); } catch {}
+  const keep = (k, r) => { mem.delete(k); mem.set(k, r); if (mem.size > MAX) mem.delete(mem.keys().next().value); };
+  let lastAt = 0;   // educação com o Wiktionary: no máximo uma consulta por segundo
+  const pace = async () => { const wait = lastAt + 1000 - Date.now(); if (wait > 0) await new Promise(r => setTimeout(r, wait)); lastAt = Date.now(); };
   const clean = raw => String(raw || '').trim().replace(/^[\s"'“”‘’(\[{«¡¿]+|[\s"'“”‘’)\]}».,;:!?…]+$/g, '').replace(/\s+/g, ' ');
 
   async function fetchWord(w){
+    await pace();
     const t = encodeURIComponent(w.replace(/ /g, '_')), opt = { credentials:'omit', referrerPolicy:'no-referrer' };
     const get = u => fetch(u, opt).then(r => r.ok ? r.json() : null, () => undefined);   // undefined = nem chegou lá
     const [d, p] = await Promise.all([
@@ -2319,28 +2365,28 @@ const Oracle = (() => {
     }
     return r.entries.length || r.tr.length ? r : null;
   }
+  const ORN = '<div class="or-orn">✦ ☾ ✦</div>';
   function render(r){
-    let h = `<div class="or-word">${esc(r.w)}${r.ipa ? `<span class="or-ipa">${esc(r.ipa)}</span>` : ''}</div>`;
-    if (r.from) h += `<div class="or-from">${esc(r.from)}${r.fromNote ? ` · ${esc(r.fromNote)}` : ''}</div>`;
-    if (r.tr.length) h += `<div class="or-pt"><b>Em português</b>${r.tr.map(t => `<div>${esc(t.ws.join(', '))}${t.gloss ? ` <small>(${esc(t.gloss)})</small>` : ''}</div>`).join('')}</div>`;
-    for (const e of r.entries){
+    let h = `<div class="or-head"><div class="or-word">${esc(r.w)}</div>${r.ipa ? `<div class="or-ipa">${esc(r.ipa)}</div>` : ''}${r.from ? `<div class="or-from">${esc(r.from)}${r.fromNote ? ` · ${esc(r.fromNote)}` : ''}</div>` : ''}</div>`;
+    if (r.tr.length) h += ORN + `<div class="or-pt"><div class="lbl">Em português</div>${r.tr.map(t => `<div class="sense">${esc(t.ws.join(', '))}${t.gloss ? `<small>${esc(t.gloss)}</small>` : ''}</div>`).join('')}</div>`;
+    if (r.entries.length) h += ORN + '<div>' + r.entries.map(e => {
       const lang = e.lang && e.lang !== 'English' ? ` · ${esc(e.lang)}` : '';
-      h += `<div class="or-pos">${esc(POS[e.pos] || e.pos)}${lang}</div><ol>${e.defs.map(d => `<li>${esc(d.t)}${d.ex ? `<i>“${esc(d.ex)}”</i>` : ''}</li>`).join('')}</ol>`;
-    }
-    h += `<a class="or-more" href="${WIKT}/wiki/${encodeURIComponent(r.w.replace(/ /g, '_'))}" target="_blank" rel="noopener noreferrer">abrir no Wiktionary ↗</a>`;
+      return `<div class="or-pos">${esc(POS[e.pos] || e.pos)}${lang}</div><ol>${e.defs.map(d => `<li>${esc(d.t)}${d.ex ? `<i>“${esc(d.ex)}”</i>` : ''}</li>`).join('')}</ol>`;
+    }).join('') + '</div>';
+    h += `<a class="or-more" href="${WIKT}/wiki/${encodeURIComponent(r.w.replace(/ /g, '_'))}" target="_blank" rel="noopener noreferrer">ler mais no Wiktionary ↗</a>`;
     return h;
   }
   const out = () => $('#orOut'), card = () => $('#oracleModal .or-card');
   function past(){
-    const ws = Object.keys(load()).reverse().slice(0, 12);
-    out().innerHTML = ws.length ? `<div class="or-past">${ws.map(w => `<button data-w="${esc(w)}">${esc(w)}</button>`).join('')}</div>` : '';
+    const ws = [...mem.keys()].reverse().slice(0, 12);
+    out().innerHTML = ws.length ? `<div class="or-past"><div class="lbl">Sussurradas há pouco</div>${ws.map(w => `<button data-w="${esc(w)}">${esc(w)}</button>`).join('')}</div>` : '';
   }
   let ticket = 0;
   async function ask(raw){
     const w = clean(raw); if (!w) return;
     $('#orInput').value = w;
-    const k = w.toLowerCase(), c = load(), mine = ++ticket;
-    if (c[k]){ keep(k, c[k]); out().innerHTML = render(c[k]); return; }
+    const k = w.toLowerCase(), hit = mem.get(k), mine = ++ticket;
+    if (hit){ keep(k, hit); out().innerHTML = render(hit); return; }
     card().classList.add('seeing'); out().innerHTML = '<div class="or-msg">O oráculo está vendo…</div>'; $('#orGo').disabled = true;
     let r = null, fail = false;
     try { r = await look(w); if (!r && w !== k) r = await look(k); } catch { fail = true; }
@@ -2363,7 +2409,7 @@ const Oracle = (() => {
   $('#orClose').onclick = () => open(false);
   $('#orGo').onclick = () => ask($('#orInput').value);
   $('#orInput').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); ask(e.target.value); } });
-  $('#orInput').addEventListener('input', e => { if (!e.target.value.trim()) past(); });
+  $('#orInput').addEventListener('input', e => { if (!e.target.value.trim()){ ticket++; card().classList.remove('seeing'); $('#orGo').disabled = false; past(); } });
   $('#orOut').addEventListener('click', e => { const b = e.target.closest('[data-w]'); if (b) ask(b.dataset.w); });
   $('#oracleModal').addEventListener('pointerdown', e => { if (e.target.id === 'oracleModal') open(false); });
   return { open, ask };
