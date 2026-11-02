@@ -680,7 +680,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.02-161501-beta</p>
+      <p class="fine ver">versão 2026.11.02-161732-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -2291,7 +2291,7 @@ const Unlock = (() => {
 
 /* ---------- oráculo: significado de uma palavra sussurrada (Wiktionary, só quando pedem) ---------- */
 const Oracle = (() => {
-  const WIKT = 'https://en.wiktionary.org', KEY = 'grimorio.oracle', MAX = 150, UA = 'Grimorio/2026.11.02-161501-beta (https://grimorio.magenifica.dev)';
+  const WIKT = 'https://en.wiktionary.org', KEY = 'grimorio.oracle', MAX = 150, UA = 'Grimorio/2026.11.02-161732-beta (https://grimorio.magenifica.dev)';
   const POS = { Noun:'substantivo', Verb:'verbo', Adjective:'adjetivo', Adverb:'advérbio', Pronoun:'pronome', Preposition:'preposição', Conjunction:'conjunção',
     Interjection:'interjeição', Determiner:'determinante', Article:'artigo', Numeral:'numeral', Particle:'partícula', 'Proper noun':'nome próprio', Phrase:'expressão',
     'Prepositional phrase':'expressão', Idiom:'expressão idiomática', Prefix:'prefixo', Suffix:'sufixo', Contraction:'contração', Abbreviation:'abreviação', Initialism:'sigla', Acronym:'acrônimo' };
@@ -2324,19 +2324,20 @@ const Oracle = (() => {
     const out = []; let cur = null;
     for (const line of en.split('\n')){
       const h = line.match(/^={3,5}\s*([^=]+?)\s*={3,5}\s*$/);
-      if (h){ cur = POS[h[1]] ? { pos:h[1], lang:'English', defs:[] } : null; if (cur) out.push(cur); continue; }
+      if (h){ cur = POS[h[1]] ? { pos:h[1], lang:'', defs:[] } : null; if (cur) out.push(cur); continue; }
       if (cur && /^#\s/.test(line) && cur.defs.length < 4){ const t = unwiki(line.slice(1)).replace(/^[\s,;:]+/, ''); if (t) cur.defs.push({ t, ex:'' }); }
     }
     return out.filter(e => e.defs.length).slice(0, 4);
   }
   function section(wt, lang){ const m = wt.match(new RegExp(`(?:^|\\n)==\\s*${lang}\\s*==[ \\t]*\\n([\\s\\S]*?)(?=\\n==[^=]|$)`)); return m ? m[1] : ''; }
+  const langName = (code, fallback) => { try { const n = new Intl.DisplayNames(['pt-BR'], { type:'language' }).of(code); if (n && n !== code) return n; } catch {} return fallback || code; };
   function entriesOf(defs){
     const order = ['en', 'pt', ...Object.keys(defs).filter(k => k !== 'en' && k !== 'pt')];
     for (const k of order){
       const out = [];
       for (const e of defs[k] || []){
         const ds = (e.definitions || []).map(d => ({ t:txt(d.definition), ex:txt((d.examples || [])[0] || '') })).filter(d => d.t).slice(0, 4);
-        if (ds.length) out.push({ pos:e.partOfSpeech || '', lang:e.language || k, defs:ds });
+        if (ds.length) out.push({ pos:e.partOfSpeech || '', lang:k === 'en' ? '' : langName(k, e.language), defs:ds });
       }
       if (out.length) return out.slice(0, 4);
     }
@@ -2365,6 +2366,12 @@ const Oracle = (() => {
       const L = await look(unwiki(lemma), false).catch(() => null);
       if (L && (L.entries.length || L.tr.length)) return { ...L, from:w, fromNote:r.entries[0]?.defs[0]?.t || '' };
     }
+    // palavra estrangeira cuja "definição" é só a palavra em inglês ("grimorio" → "grimoire"): segue a pista
+    const e0 = r.entries[0], gloss = e0?.lang && e0.defs[0].t.split(/[;,(]/)[0].trim();
+    if (deep && !r.tr.length && gloss && gloss.split(' ').length <= 3 && gloss.toLowerCase() !== w.toLowerCase()){
+      const G = await look(clean(gloss), false).catch(() => null);
+      if (G && !G.entries[0]?.lang && (G.entries.length || G.tr.length)) return { ...G, w, ipa:r.ipa, from:`${e0.lang} para “${G.w}”`, fromNote:'' };
+    }
     return r.entries.length || r.tr.length ? r : null;
   }
   const ORN = '<div class="or-orn">✦ ☾ ✦</div>';
@@ -2372,7 +2379,7 @@ const Oracle = (() => {
     let h = `<div class="or-head"><div class="or-word">${esc(r.w)}</div>${r.ipa ? `<div class="or-ipa">${esc(r.ipa)}</div>` : ''}${r.from ? `<div class="or-from">${esc(r.from)}${r.fromNote ? ` · ${esc(r.fromNote)}` : ''}</div>` : ''}</div>`;
     if (r.tr.length) h += ORN + `<div class="or-pt"><div class="lbl">Em português</div>${r.tr.map(t => `<div class="sense">${esc(t.ws.join(', '))}${t.gloss ? `<small>${esc(t.gloss)}</small>` : ''}</div>`).join('')}</div>`;
     if (r.entries.length) h += ORN + '<div>' + r.entries.map(e => {
-      const lang = e.lang && e.lang !== 'English' ? ` · ${esc(e.lang)}` : '';
+      const lang = e.lang ? ` · ${esc(e.lang)}` : '';
       return `<div class="or-pos">${esc(POS[e.pos] || e.pos)}${lang}</div><ol>${e.defs.map(d => `<li>${esc(d.t)}${d.ex ? `<i>“${esc(d.ex)}”</i>` : ''}</li>`).join('')}</ol>`;
     }).join('') + '</div>';
     h += `<a class="or-more" href="${WIKT}/wiki/${encodeURIComponent(r.w.replace(/ /g, '_'))}" target="_blank" rel="noopener noreferrer">ler mais no Wiktionary ↗</a>`;
