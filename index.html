@@ -178,15 +178,15 @@ button{font:inherit;color:inherit}
 .or-eye{display:block;width:96px;height:60px;margin:0 auto;overflow:visible}
 .or-eye .lid{fill:none;stroke:var(--gold);stroke-width:1.5;stroke-linecap:round}
 .or-eye .lash{stroke:var(--gold);stroke-width:1.3;stroke-linecap:round;opacity:.7}
-.or-eye .ball{transform-box:view-box;transform-origin:48px 30px;animation:orOpen .7s .1s cubic-bezier(.3,1.4,.5,1) both}
-.or-eye .iris{fill:url(#orIris);transform-box:fill-box;transform-origin:center}
+.or-eye .ball{transform-box:fill-box;transform-origin:center;animation:orOpen .6s .1s cubic-bezier(.3,1.3,.5,1) both}
+.or-eye .pupil{transform-box:fill-box;transform-origin:center}
 .or-eye .glow{fill:url(#orGlow);transform-box:fill-box;transform-origin:center;opacity:.55}
 .or-eye .twinkle{fill:var(--gold);transform-box:fill-box;transform-origin:center;animation:spTwinkle 2.4s ease-in-out infinite}
 .or-eye .twinkle.t2{animation-delay:.8s}.or-eye .twinkle.t3{animation-delay:1.6s}
 @keyframes orOpen{from{transform:scaleY(.06)}to{transform:none}}
-.or-card.seeing .iris{animation:orLook 1.4s ease-in-out infinite}
+.or-card.seeing .pupil{animation:orLook 1.6s ease-in-out infinite}
 .or-card.seeing .glow{animation:orGlow 1.4s ease-in-out infinite}
-@keyframes orLook{0%,100%{transform:translateX(-7px)}50%{transform:translateX(7px)}}
+@keyframes orLook{0%,100%{transform:translateX(0)}25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
 @keyframes orGlow{0%,100%{opacity:.4;transform:scale(.9)}50%{opacity:1;transform:scale(1.25)}}
 .or-title{margin:4px 0 0;text-align:center;font-family:var(--serif);font-size:21px;font-weight:600;letter-spacing:.04em;color:var(--gold)}
 .or-sub{margin:2px 0 0;text-align:center;font-family:var(--serif);font-style:italic;font-size:14px;color:var(--muted)}
@@ -680,7 +680,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.02-161732-beta</p>
+      <p class="fine ver">versão 2026.11.02-161857-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -849,8 +849,10 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <radialGradient id="orIris" cx=".38" cy=".34" r=".72"><stop offset="0" stop-color="#f5f0ff"/><stop offset=".3" stop-color="#b79cff"/><stop offset=".75" stop-color="#5b21b6"/><stop offset="1" stop-color="#2e1065"/></radialGradient>
       <radialGradient id="orGlow"><stop offset="0" stop-color="#c4b5fd" stop-opacity=".9"/><stop offset="1" stop-color="#c4b5fd" stop-opacity="0"/></radialGradient></defs>
       <path class="lash" d="M48 4v6M31 7l3 5.5M65 7l-3 5.5M17 14l4.5 4M79 14l-4.5 4"/>
-      <g class="ball"><circle class="glow" cx="48" cy="34" r="22"/><path class="lid" d="M10 34C24 14 72 14 86 34 72 54 24 54 10 34z"/>
-        <circle class="iris" cx="48" cy="34" r="11"/><circle cx="48" cy="34" r="4" fill="#12091f" opacity=".85"/><circle cx="44.6" cy="30.4" r="2.2" fill="#fff" opacity=".9"/></g>
+      <clipPath id="orLidClip"><path d="M10 34C24 14 72 14 86 34 72 54 24 54 10 34z"/></clipPath>
+      <circle class="glow" cx="48" cy="34" r="22"/>
+      <g class="ball"><g clip-path="url(#orLidClip)"><g class="pupil"><circle cx="48" cy="34" r="11" fill="url(#orIris)"/><circle cx="48" cy="34" r="4" fill="#12091f" opacity=".85"/><circle cx="44.6" cy="30.4" r="2.2" fill="#fff" opacity=".9"/></g></g>
+        <path class="lid" d="M10 34C24 14 72 14 86 34 72 54 24 54 10 34z"/></g>
       <path class="twinkle" d="M6 48l.9 2.1 2.1.9-2.1.9L6 54l-.9-2.1L3 51l2.1-.9z"/><path class="twinkle t2" d="M90 46l.8 1.8 1.8.8-1.8.8L90 51.2l-.8-1.8-1.8-.8 1.8-.8z"/><path class="twinkle t3" d="M84 4l.7 1.6 1.6.7-1.6.7L84 8.6l-.7-1.6-1.6-.7 1.6-.7z"/>
     </svg>
     <div class="or-title">Consulta ao oráculo</div>
@@ -2291,7 +2293,7 @@ const Unlock = (() => {
 
 /* ---------- oráculo: significado de uma palavra sussurrada (Wiktionary, só quando pedem) ---------- */
 const Oracle = (() => {
-  const WIKT = 'https://en.wiktionary.org', KEY = 'grimorio.oracle', MAX = 150, UA = 'Grimorio/2026.11.02-161732-beta (https://grimorio.magenifica.dev)';
+  const WIKT = 'https://en.wiktionary.org', KEY = 'grimorio.oracle', MAX = 150, UA = 'Grimorio/2026.11.02-161857-beta (https://grimorio.magenifica.dev)';
   const POS = { Noun:'substantivo', Verb:'verbo', Adjective:'adjetivo', Adverb:'advérbio', Pronoun:'pronome', Preposition:'preposição', Conjunction:'conjunção',
     Interjection:'interjeição', Determiner:'determinante', Article:'artigo', Numeral:'numeral', Particle:'partícula', 'Proper noun':'nome próprio', Phrase:'expressão',
     'Prepositional phrase':'expressão', Idiom:'expressão idiomática', Prefix:'prefixo', Suffix:'sufixo', Contraction:'contração', Abbreviation:'abreviação', Initialism:'sigla', Acronym:'acrônimo' };
