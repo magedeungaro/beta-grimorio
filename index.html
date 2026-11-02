@@ -4,7 +4,7 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover">
 <!-- Nada sai daqui: sem rede. Só blob: (bibliotecas embutidas e o PDF aberto). -->
-<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob: https://accounts.google.com https://apis.google.com https://www.gstatic.com https://ssl.gstatic.com; worker-src blob: 'self'; manifest-src 'self'; style-src 'unsafe-inline' https://accounts.google.com https://apis.google.com https://www.gstatic.com https://ssl.gstatic.com; img-src blob: data: 'self' https://accounts.google.com https://apis.google.com https://www.gstatic.com https://ssl.gstatic.com https://*.googleusercontent.com; font-src blob: data: https://fonts.gstatic.com; connect-src blob: data: https://en.wiktionary.org https://www.googleapis.com https://content.googleapis.com https://accounts.google.com https://*.googleusercontent.com; frame-src https://docs.google.com https://drive.google.com https://accounts.google.com https://content.googleapis.com; base-uri 'none'; form-action 'none'">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline' blob: https://accounts.google.com https://apis.google.com https://www.gstatic.com https://ssl.gstatic.com; worker-src blob: 'self'; manifest-src 'self'; style-src 'unsafe-inline' https://accounts.google.com https://apis.google.com https://www.gstatic.com https://ssl.gstatic.com; img-src blob: data: 'self' https://accounts.google.com https://apis.google.com https://www.gstatic.com https://ssl.gstatic.com https://*.googleusercontent.com; font-src blob: data: https://fonts.gstatic.com; connect-src blob: data: https://en.wiktionary.org https://pt.wiktionary.org https://www.googleapis.com https://content.googleapis.com https://accounts.google.com https://*.googleusercontent.com; frame-src https://docs.google.com https://drive.google.com https://accounts.google.com https://content.googleapis.com; base-uri 'none'; form-action 'none'">
 <meta name="referrer" content="strict-origin">
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -221,7 +221,15 @@ button{font:inherit;color:inherit}
 .or-out li::marker{color:var(--gold);font-family:var(--serif)}
 .or-out li i{display:block;margin-top:1px;font-family:var(--serif);color:var(--muted);font-size:13.5px}
 .or-msg{text-align:center;font-family:var(--serif);font-style:italic;font-size:15px;color:var(--muted);padding:8px 0}
-.or-more{display:block;margin-top:14px;text-align:center;font-size:12px;color:var(--lilac);opacity:.8;text-decoration:none}
+.or-links{display:flex;justify-content:center;gap:18px;margin-top:14px}
+.or-more{font-size:12px;color:var(--lilac);opacity:.8;text-decoration:none}
+.or-mean .lbl{text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);opacity:.85}
+.or-ptw{text-align:center;font-family:var(--serif);font-style:italic;color:var(--muted);font-size:14px;margin-top:2px}
+.or-en{margin-top:14px;border-top:1px solid rgba(242,212,143,.15);padding-top:8px}
+.or-en summary{cursor:pointer;list-style:none;text-align:center;font-family:var(--serif);font-style:italic;font-size:13.5px;color:var(--muted)}
+.or-en summary::-webkit-details-marker{display:none}
+.or-en summary::before{content:'✦ ';color:var(--gold)}
+.or-en[open] summary{margin-bottom:2px}
 .or-more:hover{opacity:1;text-decoration:underline}
 .or-past{display:flex;flex-wrap:wrap;gap:6px;justify-content:center}
 .or-past .lbl{width:100%;text-align:center;font-size:10.5px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--gold);opacity:.7;margin-bottom:2px}
@@ -680,7 +688,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.02-161857-beta</p>
+      <p class="fine ver">versão 2026.11.02-193241-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -860,7 +868,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
     <div class="or-ask"><input id="orInput" type="search" autocomplete="off" autocapitalize="off" autocorrect="off" spellcheck="false" enterkeyhint="search" placeholder="sussurre aqui…" aria-label="Palavra">
       <button id="orGo" title="Consultar" aria-label="Consultar"><svg viewBox="0 0 24 24"><path d="M12 2.5l2.2 6.3 6.3 2.2-6.3 2.2L12 19.5l-2.2-6.3L3.5 11l6.3-2.2z"/></svg></button></div>
     <div class="or-out" id="orOut" aria-live="polite"></div>
-    <p class="or-note">Só a palavra sussurrada vai até o Wiktionary. O oráculo esquece tudo quando você fecha o Grimório.</p>
+    <p class="or-note">Só a palavra sussurrada vai até o Wiktionary e o Wikcionário. O oráculo esquece tudo quando você fecha o Grimório.</p>
   </div>
 </div>
 <div id="pwModal" hidden>
@@ -2293,13 +2301,13 @@ const Unlock = (() => {
 
 /* ---------- oráculo: significado de uma palavra sussurrada (Wiktionary, só quando pedem) ---------- */
 const Oracle = (() => {
-  const WIKT = 'https://en.wiktionary.org', KEY = 'grimorio.oracle', MAX = 150, UA = 'Grimorio/2026.11.02-161857-beta (https://grimorio.magenifica.dev)';
+  const WIKT = 'https://en.wiktionary.org', WIKT_PT = 'https://pt.wiktionary.org', KEY = 'grimorio.oracle', MAX = 150, UA = 'Grimorio/2026.11.02-193241-beta (https://grimorio.magenifica.dev)';
   const POS = { Noun:'substantivo', Verb:'verbo', Adjective:'adjetivo', Adverb:'advérbio', Pronoun:'pronome', Preposition:'preposição', Conjunction:'conjunção',
     Interjection:'interjeição', Determiner:'determinante', Article:'artigo', Numeral:'numeral', Particle:'partícula', 'Proper noun':'nome próprio', Phrase:'expressão',
     'Prepositional phrase':'expressão', Idiom:'expressão idiomática', Prefix:'prefixo', Suffix:'sufixo', Contraction:'contração', Abbreviation:'abreviação', Initialism:'sigla', Acronym:'acrônimo' };
   const esc = t => String(t).replace(/[&<>"']/g, c => ({ '&':'&amp;', '<':'&lt;', '>':'&gt;', '"':'&quot;', "'":'&#39;' }[c]));
   const txt = h => new DOMParser().parseFromString(String(h || ''), 'text/html').body.textContent.replace(/\s+/g, ' ').trim();   // DOMParser: inerte, nada carrega nem roda
-  const unwiki = t => t.replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1').replace(/\{\{[^{}]*\}\}/g, '').replace(/'{2,}/g, '').trim();
+  const unwiki = t => { t = t.replace(/<ref[\s\S]*?(?:\/>|<\/ref>)/g, '').replace(/<[^>]+>/g, '').replace(/\[\[(?:[^\]|]*\|)?([^\]]*)\]\]/g, '$1'); for (let i = 0; i < 4 && /\{\{/.test(t); i++) t = t.replace(/\{\{[^{}]*\}\}/g, ''); return t.replace(/'{2,}/g, '').replace(/\s+/g, ' ').trim(); };
   const mem = new Map();   // só na memória: fechou o Grimório, o oráculo esquece
   try { localStorage.removeItem(KEY); } catch {}
   const keep = (k, r) => { mem.delete(k); mem.set(k, r); if (mem.size > MAX) mem.delete(mem.keys().next().value); };
@@ -2307,15 +2315,40 @@ const Oracle = (() => {
   const pace = async () => { const wait = lastAt + 1000 - Date.now(); if (wait > 0) await new Promise(r => setTimeout(r, wait)); lastAt = Date.now(); };
   const clean = raw => String(raw || '').trim().replace(/^[\s"'“”‘’(\[{«¡¿]+|[\s"'“”‘’)\]}».,;:!?…]+$/g, '').replace(/\s+/g, ' ');
 
+  const opt = { credentials:'omit', referrerPolicy:'no-referrer' };
+  // o Grimório se apresenta à Wikimedia (recomendação deles pra apps no navegador); se o cabeçalho não passar, tenta sem
+  const get = u => fetch(u, { ...opt, headers:{ 'Api-User-Agent':UA } }).catch(() => fetch(u, opt))
+    .then(r => r.ok ? r.json() : null, () => undefined);   // undefined = nem chegou lá
+  const wikitext = (base, w) => get(`${base}/w/api.php?action=parse&page=${encodeURIComponent(w.replace(/ /g, '_'))}&prop=wikitext&format=json&formatversion=2&redirects=1&origin=*`);
+  // significado em português: lê o verbete do pt.wiktionary (seção Português → classes gramaticais → linhas "# …")
+  const PT_POS = /^(substantivo|adjetivo|verbo|adv[ée]rbio|pronome|preposi[çc][ãa]o|conjun[çc][ãa]o|interjei[çc][ãa]o|artigo|numeral|locu[çc][ãa]o|express[ãa]o|prefixo|sufixo|abreviatura|sigla|contra[çc][ãa]o|nome pr[óo]prio|part[íi]cula)/i;
+  async function ptMeaning(w){
+    const p = await wikitext(WIKT_PT, w); const wt = p?.parse?.wikitext;
+    if (!wt) return null;
+    const lines = wt.split('\n'), L1 = /^=([^=].*?[^=]|[^=])=\s*$/;
+    let i0 = lines.findIndex(l => L1.test(l) && /\{\{-pt-\}\}|portugu[êe]s/i.test(l)), i1 = lines.length;
+    if (i0 < 0){ if (lines.some(l => L1.test(l))) return null; i0 = -1; }
+    else for (let i = i0 + 1; i < lines.length; i++) if (L1.test(lines[i])){ i1 = i; break; }
+    const out = []; let cur = null;
+    for (const line of lines.slice(i0 + 1, i1)){
+      const h = line.match(/^={2,5}\s*(.+?)\s*={2,5}\s*$/);
+      if (h){ const name = h[1].replace(/\{\{([^|}]+)[^}]*\}\}/g, '$1').replace(/[\[\]]/g, '').trim(); const m = name.match(PT_POS);
+        cur = m ? { pos:m[1].toLowerCase(), lang:'', defs:[] } : null; if (cur) out.push(cur); continue; }
+      if (!cur) continue;
+      const d = line.match(/^#(?![*:#])\s*(.+)/), x = line.match(/^#[*:]\s*(.+)/);
+      if (d && cur.defs.length < 4){ const t = unwiki(d[1]).replace(/^[\s,;:.]+/, ''); if (t) cur.defs.push({ t, ex:'' }); }
+      else if (x && cur.defs.length && !cur.defs.at(-1).ex){ const t = unwiki(x[1]); if (t && t.length < 220) cur.defs.at(-1).ex = t; }
+    }
+    const es = out.filter(e => e.defs.length).slice(0, 3);
+    return es.length ? { w, entries:es } : null;
+  }
+
   async function fetchWord(w){
     await pace();
-    const t = encodeURIComponent(w.replace(/ /g, '_')), opt = { credentials:'omit', referrerPolicy:'no-referrer' };
-    // o Grimório se apresenta à Wikimedia (recomendação deles pra apps no navegador); se o cabeçalho não passar, tenta sem
-    const get = u => fetch(u, { ...opt, headers:{ 'Api-User-Agent':UA } }).catch(() => fetch(u, opt))
-      .then(r => r.ok ? r.json() : null, () => undefined);   // undefined = nem chegou lá
+    const t = encodeURIComponent(w.replace(/ /g, '_'));
     const [d, p] = await Promise.all([
       get(`${WIKT}/api/rest_v1/page/definition/${t}?redirect=true`),
-      get(`${WIKT}/w/api.php?action=parse&page=${t}&prop=wikitext&format=json&formatversion=2&redirects=1&origin=*`),
+      wikitext(WIKT, w),
     ]);
     if (d === undefined && p === undefined) throw new Error('offline');
     const wt = p?.parse?.wikitext || '';
@@ -2376,15 +2409,32 @@ const Oracle = (() => {
     }
     return r.entries.length || r.tr.length ? r : null;
   }
+  // consulta completa: inglês (Wiktionary) + significado em português (Wikcionário)
+  async function consult(w){
+    const k = w.toLowerCase();
+    let r = await look(w); if (!r && w !== k) r = await look(k);
+    const isPt = !r || /portugu/i.test(r.entries[0]?.lang || '');
+    const target = r?.tr[0]?.ws[0] || (isPt ? w : null);
+    let P = target ? await ptMeaning(target).catch(() => null) : null;
+    if (!P && !r && w !== k) P = await ptMeaning(k).catch(() => null);
+    if (!r && !P) return null;
+    return { ...(r || { w, ipa:'', entries:[], tr:[] }), pt:P, ptOnly:!r };
+  }
   const ORN = '<div class="or-orn">✦ ☾ ✦</div>';
+  const defList = es => es.map(e => {
+    const lang = e.lang ? ` · ${esc(e.lang)}` : '';
+    return `<div class="or-pos">${esc(POS[e.pos] || e.pos)}${lang}</div><ol>${e.defs.map(d => `<li>${esc(d.t)}${d.ex ? `<i>“${esc(d.ex)}”</i>` : ''}</li>`).join('')}</ol>`;
+  }).join('');
+  const wurl = (base, w) => `${base}/wiki/${encodeURIComponent(w.replace(/ /g, '_'))}`;
   function render(r){
     let h = `<div class="or-head"><div class="or-word">${esc(r.w)}</div>${r.ipa ? `<div class="or-ipa">${esc(r.ipa)}</div>` : ''}${r.from ? `<div class="or-from">${esc(r.from)}${r.fromNote ? ` · ${esc(r.fromNote)}` : ''}</div>` : ''}</div>`;
     if (r.tr.length) h += ORN + `<div class="or-pt"><div class="lbl">Em português</div>${r.tr.map(t => `<div class="sense">${esc(t.ws.join(', '))}${t.gloss ? `<small>${esc(t.gloss)}</small>` : ''}</div>`).join('')}</div>`;
-    if (r.entries.length) h += ORN + '<div>' + r.entries.map(e => {
-      const lang = e.lang ? ` · ${esc(e.lang)}` : '';
-      return `<div class="or-pos">${esc(POS[e.pos] || e.pos)}${lang}</div><ol>${e.defs.map(d => `<li>${esc(d.t)}${d.ex ? `<i>“${esc(d.ex)}”</i>` : ''}</li>`).join('')}</ol>`;
-    }).join('') + '</div>';
-    h += `<a class="or-more" href="${WIKT}/wiki/${encodeURIComponent(r.w.replace(/ /g, '_'))}" target="_blank" rel="noopener noreferrer">ler mais no Wiktionary ↗</a>`;
+    if (r.pt){
+      h += ORN + `<div class="or-mean"><div class="lbl">Significado</div>${defList(r.pt.entries)}</div>`;
+      if (r.entries.length && !/portugu/i.test(r.entries[0].lang || '')) h += `<details class="or-en"><summary>em inglês</summary>${defList(r.entries)}</details>`;
+    } else if (r.entries.length) h += ORN + '<div>' + defList(r.entries) + '</div>';
+    h += '<div class="or-links">' + (r.ptOnly ? '' : `<a class="or-more" href="${wurl(WIKT, r.w)}" target="_blank" rel="noopener noreferrer">Wiktionary ↗</a>`)
+      + (r.pt ? `<a class="or-more" href="${wurl(WIKT_PT, r.pt.w)}" target="_blank" rel="noopener noreferrer">Wikcionário ↗</a>` : '') + '</div>';
     return h;
   }
   const out = () => $('#orOut'), card = () => $('#oracleModal .or-card');
@@ -2400,7 +2450,7 @@ const Oracle = (() => {
     if (hit){ keep(k, hit); out().innerHTML = render(hit); return; }
     card().classList.add('seeing'); out().innerHTML = '<div class="or-msg">O oráculo está vendo…</div>'; $('#orGo').disabled = true;
     let r = null, fail = false;
-    try { r = await look(w); if (!r && w !== k) r = await look(k); } catch { fail = true; }
+    try { r = await consult(w); } catch { fail = true; }
     if (mine !== ticket) return;
     card().classList.remove('seeing'); $('#orGo').disabled = false;
     if (r){ keep(k, r); out().innerHTML = render(r); }
