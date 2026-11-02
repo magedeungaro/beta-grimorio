@@ -601,7 +601,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.01-225459-beta</p>
+      <p class="fine ver">versão 2026.11.01-230936-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -739,7 +739,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
 <div id="shelfModal" hidden>
   <div class="pm-card shelf-card" role="dialog" aria-modal="true" aria-label="Estante de feitiços">
     <div class="pm-title">✦ Estante de feitiços ✦<small>Seus pergaminhos ficam guardados neste aparelho</small></div>
-    <div class="sh-sync" id="shSync" hidden><span id="shSyncTxt"></span><button class="btn" id="shSyncBtn"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.6 3.2v4h-4M5.4 20.8v-4h4"/></svg>Sincronizar</button></div>
+    <div class="sh-sync" id="shSync" hidden><span id="shSyncTxt"></span><button class="btn" id="shSyncBtn"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.6 3.2v4h-4M5.4 20.8v-4h4"/></svg><span>Sincronizar</span></button></div>
     <div class="shelf" id="shelfList"></div>
     <div class="nb-row"><button class="btn" id="shelfClose">Fechar</button><button class="btn primary" id="shelfNew">Novo pergaminho ✦</button></div>
   </div>
@@ -1838,7 +1838,7 @@ function shelfModal(open){
   if (open){
     openDrawer(false); drivePanel?.(false); renderShelf(); paintSync();
     if (DRIVE && driveKnown() && tokenFresh()) syncShelf();   // já liberado nesta visita: sincroniza sozinho
-    else if (DRIVE && driveKnown()) driveLoad().catch(() => {});
+    else if (DRIVE && driveKnown()){ gLoading = !GD.tc; paintSync(); driveLoad().then(() => { gLoading = false; paintSync(); }).catch(() => { gLoading = false; paintSync(); }); }
   }
 }
 function renderScModal(){
@@ -1859,7 +1859,7 @@ function scModal(open){
 }
 $('#btnShelf').onclick = $('#btnShelf2').onclick = () => { if (editing) finishEdit(); shelfModal(true); };
 $('#shelfClose').onclick = () => shelfModal(false);
-$('#shSyncBtn').onclick = () => syncShelf();
+$('#shSyncBtn').onclick = () => shelfConnect();
 $('#shelfNew').onclick = () => { shelfModal(false); scModal(true); };
 $('#shelfModal').addEventListener('pointerdown', e => { if (e.target.id === 'shelfModal') shelfModal(false); });
 $('#scName').addEventListener('keydown', e => { if (e.key === 'Enter'){ e.preventDefault(); e.target.blur(); } });
@@ -3986,12 +3986,21 @@ async function syncShelf(){
 async function trashFile(id){
   await gfetch(`/drive/v3/files/${id}?fields=id`, { method:'PATCH', headers:{ 'Content-Type':'application/json' }, body:JSON.stringify({ trashed:true }) });
 }
+let gLoading = false;
 function paintSync(){
   const bar = $('#shSync'); if (!bar) return;
   bar.hidden = !DRIVE; if (!DRIVE) return;
-  const t = lsJSON('grimorio.lastSync', 0);
-  $('#shSyncTxt').textContent = syncing ? 'Sincronizando…' : t ? `Drive: sincronizado ${ago(t)}` : 'Guarde a estante no seu Drive (pasta Grimório/Estante)';
-  $('#shSyncBtn').disabled = syncing;
+  const t = lsJSON('grimorio.lastSync', 0), ready = !!window.__driveMock || !!GD.tc, inn = tokenFresh() || driveKnown();
+  $('#shSyncTxt').textContent = syncing ? 'Sincronizando…' : gLoading ? 'Chamando o Google…' : t ? `Drive: sincronizado ${ago(t)}` : 'Guarde a estante no seu Drive (pasta Grimório/Estante)';
+  $('#shSyncBtn span').textContent = gLoading ? 'Carregando…' : !ready ? (inn ? 'Sincronizar' : 'Conectar ao Drive') : inn ? 'Sincronizar' : 'Entrar com o Google';
+  $('#shSyncBtn').disabled = syncing || gLoading;
+}
+// o Google só é carregado quando a pessoa pede (privacidade); o login precisa de um toque depois de carregar
+function shelfConnect(){
+  if (window.__driveMock || GD.tc) return syncShelf();
+  gLoading = true; paintSync();
+  driveLoad().then(() => { gLoading = false; paintSync(); toast('Google pronto ✦ toque de novo pra entrar'); })
+    .catch(e => { gLoading = false; paintSync(); toast('Não conectou: ' + e.message); });
 }
 function renderDrivePanel(){
   if (!DRIVE) return;
