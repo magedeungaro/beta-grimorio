@@ -160,6 +160,8 @@ button{font:inherit;color:inherit}
 .sh-sync[hidden]{display:none}
 .sh-sync span{flex:1;min-width:0}
 .sh-sync .btn{flex:none;padding:6px 10px;font-size:12.5px}
+.sh-sync{flex-wrap:wrap}
+.sh-sync .dp-link{flex:none;padding:4px 2px;font-size:11.5px}
 .sh-sync .btn svg{width:15px;height:15px}
 .sh-sync .btn:disabled svg{animation:shSpin 1s linear infinite}
 @keyframes shSpin{to{transform:rotate(360deg)}}
@@ -601,7 +603,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.01-230936-beta</p>
+      <p class="fine ver">versão 2026.11.01-231526-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -739,7 +741,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
 <div id="shelfModal" hidden>
   <div class="pm-card shelf-card" role="dialog" aria-modal="true" aria-label="Estante de feitiços">
     <div class="pm-title">✦ Estante de feitiços ✦<small>Seus pergaminhos ficam guardados neste aparelho</small></div>
-    <div class="sh-sync" id="shSync" hidden><span id="shSyncTxt"></span><button class="btn" id="shSyncBtn"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.6 3.2v4h-4M5.4 20.8v-4h4"/></svg><span>Sincronizar</span></button></div>
+    <div class="sh-sync" id="shSync" hidden><span id="shSyncTxt"></span><button class="btn" id="shSyncBtn"><svg viewBox="0 0 24 24"><path d="M20 12a8 8 0 0 1-14.3 4.9M4 12a8 8 0 0 1 14.3-4.9"/><path d="M18.6 3.2v4h-4M5.4 20.8v-4h4"/></svg><span>Sincronizar</span></button><button class="dp-link" id="shOff" hidden>Desconectar</button></div>
     <div class="shelf" id="shelfList"></div>
     <div class="nb-row"><button class="btn" id="shelfClose">Fechar</button><button class="btn primary" id="shelfNew">Novo pergaminho ✦</button></div>
   </div>
@@ -3994,6 +3996,7 @@ function paintSync(){
   $('#shSyncTxt').textContent = syncing ? 'Sincronizando…' : gLoading ? 'Chamando o Google…' : t ? `Drive: sincronizado ${ago(t)}` : 'Guarde a estante no seu Drive (pasta Grimório/Estante)';
   $('#shSyncBtn span').textContent = gLoading ? 'Carregando…' : !ready ? (inn ? 'Sincronizar' : 'Conectar ao Drive') : inn ? 'Sincronizar' : 'Entrar com o Google';
   $('#shSyncBtn').disabled = syncing || gLoading;
+  $('#shOff').hidden = !(GD.token || driveKnown()) || !!window.__driveMock;
 }
 // o Google só é carregado quando a pessoa pede (privacidade); o login precisa de um toque depois de carregar
 function shelfConnect(){
@@ -4023,10 +4026,11 @@ if (DRIVE){
   $('#dpOpen').onclick = driveOpen;
   $('#dpSave').onclick = () => { drivePanel(false); driveSave(); };
   $('#dpDownload').onclick = () => { drivePanel(false); download(); };
-  $('#dpOff').onclick = () => {
+  $('#dpOff').onclick = $('#shOff').onclick = () => {
     if (GD.token && window.google?.accounts) google.accounts.oauth2.revoke(GD.token, () => {});
-    GD.token = null; try { localStorage.removeItem('grimorio.drive'); } catch {}
-    renderDrivePanel(); toast('Desconectado do Drive');
+    GD.token = null; GD.exp = 0; clearTimeout(autoT);
+    try { for (const k of ['grimorio.drive', 'grimorio.lastSync']) localStorage.removeItem(k); } catch {}
+    renderDrivePanel(); paintSync(); toast('Desconectado do Drive ✦ seus pergaminhos continuam aqui no aparelho', 4000);
   };
   addEventListener('pointerdown', e => { if (!$('#drivePanel').hidden && !e.target.closest('#drivePanel,#btnDrive,#btnDrive2')) drivePanel(false); }, true);
   // beta: se a segurança da página barrar algo do Google, mostra o quê (ajuda a depurar pelo celular)
