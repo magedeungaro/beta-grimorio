@@ -202,7 +202,7 @@ button{font:inherit;color:inherit}
 :root.scroll-doc .add-page.end{cursor:default;filter:none;color:rgba(251,233,200,.7)}
 :root.dark.scroll-doc .add-page{color:#fbe9c8;background:linear-gradient(180deg,#e0b072 0,#a56a34 40%,#6b3f1c 75%,#3d220e 100%)}
 /* abertura: o selo quebra e o rolo desenrola */
-#unroll{position:fixed;inset:0;z-index:28;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:rgba(15,10,26,.62);-webkit-backdrop-filter:blur(5px);backdrop-filter:blur(5px);transition:opacity .45s;cursor:pointer}
+#unroll{position:fixed;inset:0;z-index:28;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:18px;background:radial-gradient(ellipse at 50% 45%,#2a1d45 0,#170f28 60%,#0f0a1a 100%);transition:opacity .45s;cursor:pointer}   /* opaco: o que está escrito só aparece depois de desenrolar */
 #unroll[hidden]{display:none}
 #unroll.bye{opacity:0}
 .ur{position:relative;width:min(400px,72vw);display:flex;flex-direction:column;align-items:center}
@@ -601,7 +601,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.01-224519-beta</p>
+      <p class="fine ver">versão 2026.11.01-225459-beta</p>
     </div>
   </div>
   <div id="pages"></div>
