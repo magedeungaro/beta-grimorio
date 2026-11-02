@@ -680,7 +680,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.02-161026-beta</p>
+      <p class="fine ver">versão 2026.11.02-161501-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -2291,7 +2291,7 @@ const Unlock = (() => {
 
 /* ---------- oráculo: significado de uma palavra sussurrada (Wiktionary, só quando pedem) ---------- */
 const Oracle = (() => {
-  const WIKT = 'https://en.wiktionary.org', KEY = 'grimorio.oracle', MAX = 150;
+  const WIKT = 'https://en.wiktionary.org', KEY = 'grimorio.oracle', MAX = 150, UA = 'Grimorio/2026.11.02-161501-beta (https://grimorio.magenifica.dev)';
   const POS = { Noun:'substantivo', Verb:'verbo', Adjective:'adjetivo', Adverb:'advérbio', Pronoun:'pronome', Preposition:'preposição', Conjunction:'conjunção',
     Interjection:'interjeição', Determiner:'determinante', Article:'artigo', Numeral:'numeral', Particle:'partícula', 'Proper noun':'nome próprio', Phrase:'expressão',
     'Prepositional phrase':'expressão', Idiom:'expressão idiomática', Prefix:'prefixo', Suffix:'sufixo', Contraction:'contração', Abbreviation:'abreviação', Initialism:'sigla', Acronym:'acrônimo' };
@@ -2308,7 +2308,9 @@ const Oracle = (() => {
   async function fetchWord(w){
     await pace();
     const t = encodeURIComponent(w.replace(/ /g, '_')), opt = { credentials:'omit', referrerPolicy:'no-referrer' };
-    const get = u => fetch(u, opt).then(r => r.ok ? r.json() : null, () => undefined);   // undefined = nem chegou lá
+    // o Grimório se apresenta à Wikimedia (recomendação deles pra apps no navegador); se o cabeçalho não passar, tenta sem
+    const get = u => fetch(u, { ...opt, headers:{ 'Api-User-Agent':UA } }).catch(() => fetch(u, opt))
+      .then(r => r.ok ? r.json() : null, () => undefined);   // undefined = nem chegou lá
     const [d, p] = await Promise.all([
       get(`${WIKT}/api/rest_v1/page/definition/${t}?redirect=true`),
       get(`${WIKT}/w/api.php?action=parse&page=${t}&prop=wikitext&format=json&formatversion=2&redirects=1&origin=*`),
