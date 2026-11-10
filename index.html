@@ -582,6 +582,8 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
 .dp-btn{width:100%;justify-content:flex-start;background:rgba(255,255,255,.05)}
 .dp-btn.primary{justify-content:center;background:linear-gradient(135deg,var(--accent),var(--accent-2))}
 .dp-btn[hidden]{display:none}
+.dp-hint{margin:2px 4px 0;font-size:12px;line-height:1.4;color:var(--muted);text-align:center}
+.dp-hint .dp-link{padding:0;font-size:12px;color:var(--lilac)}
 .dp-link{border:none;background:none;color:var(--muted);font:inherit;font-size:12.5px;text-decoration:underline;cursor:pointer;align-self:center;padding:4px}
 .dp-link[hidden]{display:none}
 .card-actions{display:flex;gap:8px;justify-content:center;align-items:center;flex-wrap:wrap}
@@ -688,7 +690,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.08-232318-beta</p>
+      <p class="fine ver">versão 2026.11.10-193530-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -789,6 +791,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
   <button class="btn dp-btn" id="dpOpen">Abrir PDF do Drive</button>
   <button class="btn dp-btn" id="dpSave">Salvar no Drive</button>
   <button class="btn dp-btn" id="dpDownload">Baixar uma cópia no aparelho</button>
+  <p class="dp-hint" id="dpFix" hidden>O Google reclamou de cookies ou de “chave inválida”? <button class="dp-link" id="dpRe">Reconectar</button></p>
   <button class="dp-link" id="dpOff">Desconectar</button>
 </div>
 
@@ -2315,7 +2318,7 @@ const Unlock = (() => {
 
 /* ---------- oráculo: significado de uma palavra sussurrada (Wiktionary, só quando pedem) ---------- */
 const Oracle = (() => {
-  const WIKT = 'https://en.wiktionary.org', WIKT_PT = 'https://pt.wiktionary.org', KEY = 'grimorio.oracle', MAX = 150, UA = 'Grimorio/2026.11.08-232318-beta (https://grimorio.magenifica.dev)';
+  const WIKT = 'https://en.wiktionary.org', WIKT_PT = 'https://pt.wiktionary.org', KEY = 'grimorio.oracle', MAX = 150, UA = 'Grimorio/2026.11.10-193530-beta (https://grimorio.magenifica.dev)';
   const POS = { Noun:'substantivo', Verb:'verbo', Adjective:'adjetivo', Adverb:'advérbio', Pronoun:'pronome', Preposition:'preposição', Conjunction:'conjunção',
     Interjection:'interjeição', Determiner:'determinante', Article:'artigo', Numeral:'numeral', Particle:'partícula', 'Proper noun':'nome próprio', Phrase:'expressão',
     'Prepositional phrase':'expressão', Idiom:'expressão idiomática', Prefix:'prefixo', Suffix:'sufixo', Contraction:'contração', Abbreviation:'abreviação', Initialism:'sigla', Acronym:'acrônimo' };
@@ -4417,11 +4420,19 @@ function driveLoad(){
     .catch(e => { GD.loading = null; throw e; });
 }
 // Chamar ainda dentro do toque: se precisar, abre a janelinha de login do Google.
-function driveToken(){
+function driveToken(force = false){
   if (window.__driveMock) return window.__driveMock.token();
-  if (GD.token && Date.now() < GD.exp) return Promise.resolve(GD.token);
+  if (!force && GD.token && Date.now() < GD.exp) return Promise.resolve(GD.token);
   if (!GD.tc) return Promise.reject(new Error('ainda carregando o Google, tente de novo'));
-  return new Promise((ok, bad) => { GD.pending = { ok, bad }; GD.tc.requestAccessToken({ prompt: driveKnown() ? '' : 'consent' }); });
+  // No Safari (sobretudo no app da tela de início) os cookies do Google só continuam valendo dentro da janela do
+  // Drive se você TOCAR numa página do Google de vez em quando; o login que abre e fecha sozinho não conta.
+  // Então, a cada ~10 dias (ou quando pedem pra reconectar), a janela pede pra escolher a conta: esse toque renova tudo.
+  let last = 0; try { last = Number(localStorage.getItem('grimorio.driveTap')) || 0; } catch {}
+  const prompt = !driveKnown() ? 'consent' : (force || Date.now() - last > 10 * 864e5) ? 'select_account' : '';
+  return new Promise((ok, bad) => {
+    GD.pending = { ok:t => { if (prompt){ try { localStorage.setItem('grimorio.driveTap', String(Date.now())); } catch {} } ok(t); }, bad };
+    GD.tc.requestAccessToken({ prompt });
+  });
 }
 async function gfetch(path, opt = {}){
   const tok = await driveToken();
@@ -4450,8 +4461,8 @@ async function driveConnect(){
   try { await driveToken(); toast('Conectado ao Drive ✦'); renderDrivePanel(); }
   catch (e){ toast('Não conectou: ' + e.message); }
 }
-async function driveOpen(){
-  const tokP = driveToken();   // primeiro, ainda dentro do toque
+async function driveOpen(force = false){
+  const tokP = driveToken(force === true);   // primeiro, ainda dentro do toque
   try {
     const doc = await drivePick(await tokP); if (!doc) return;
     drivePanel(false); toast('Baixando do Drive…', 60000);
@@ -4641,7 +4652,7 @@ function renderDrivePanel(){
   if (!DRIVE) return;
   const on = !!GD.token || driveKnown() || !!window.__driveMock;
   $('#dpInfo').hidden = on; $('#dpConnect').hidden = on;
-  for (const id of ['#dpOpen', '#dpSave', '#dpOff']) $(id).hidden = !on;
+  for (const id of ['#dpOpen', '#dpSave', '#dpOff', '#dpFix']) $(id).hidden = !on;
   $('#dpDownload').hidden = !S.doc;
   $('#dpSave').disabled = $('#dpDownload').disabled = !S.doc || !S.editable;
   $('#dpSave').textContent = S.driveFile ? 'Salvar no Drive (atualiza o arquivo)' : 'Enviar pro Drive (pasta Grimório)';
@@ -4657,7 +4668,8 @@ if (DRIVE){
   $('#privacyNote').textContent = 'Tudo acontece neste aparelho. Só vai pro Google Drive o que você mandar salvar lá.';
   $('#btnDrive').onclick = $('#btnDrive2').onclick = () => drivePanel();
   $('#dpConnect').onclick = driveConnect;
-  $('#dpOpen').onclick = driveOpen;
+  $('#dpOpen').onclick = () => driveOpen();
+  $('#dpRe').onclick = () => driveOpen(true);   // escolher a conta de novo renova os cookies do Google e já abre o seletor
   $('#dpSave').onclick = () => { drivePanel(false); driveSave(); };
   $('#dpDownload').onclick = () => { drivePanel(false); download(); };
   $('#dpOff').onclick = $('#shOff').onclick = () => {
