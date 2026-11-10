@@ -395,6 +395,7 @@ button{font:inherit;color:inherit}
 .page .num{position:absolute;right:-2px;bottom:-16px;font-size:11px;color:#8a80a8}
 .tool-eraser .page{cursor:cell}
 .tool-text .page{cursor:text}
+.tool-fill .page{cursor:crosshair}
 /* só o que é transparente (marca-texto, grifo) multiplica com o papel; o resto aparece com a cor de verdade, até em capa escura */
 .page canvas.hlink,.page canvas.live.hl{mix-blend-mode:multiply}
 .size[hidden]{display:none}
@@ -690,7 +691,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <p class="fine" id="privacyNote">Tudo acontece neste aparelho. O arquivo não é enviado pra lugar nenhum.</p>
       <p class="fine legal"><a href="privacidade.html" target="_blank" rel="noopener">Privacidade</a> · <a href="termos.html" target="_blank" rel="noopener">Termos de uso</a></p>
       <p class="made">feito por <a href="https://www.instagram.com/magenifica.dev/" target="_blank" rel="noopener">Magenifica</a></p>
-      <p class="fine ver">versão 2026.11.10-193530-beta</p>
+      <p class="fine ver">versão 2026.11.10-195107-beta</p>
     </div>
   </div>
   <div id="pages"></div>
@@ -769,6 +770,7 @@ body.dragging .card{border-color:var(--accent);background:rgba(139,92,246,.12)}
       <button class="dr-item" data-tool="magic" title="Pena mágica: tinta invisível (M)"><span class="slot"><svg viewBox="0 0 24 24"><path d="M20.5 3.2C13 3.8 8.2 8.6 7.4 15.6c6.6-.6 11.6-5.2 13.1-12.4z" stroke-dasharray="2.4 2"/><path d="M20.5 3.2L4 20.5"/><path d="M6 4.5l.6 1.4 1.4.6-1.4.6L6 8.5l-.6-1.4L4 6.5l1.4-.6z" fill="currentColor" stroke="none"/><path d="M18.5 15l.5 1.1 1.1.5-1.1.5-.5 1.1-.5-1.1-1.1-.5 1.1-.5z" fill="currentColor" stroke="none"/></svg></span><span class="nm">Pena mágica</span></button>
       <button class="dr-item" data-tool="pencil" title="Lápis (L)"><span class="slot"><svg viewBox="0 0 24 24"><path d="M16 3.5l4.5 4.5L8.5 20H4v-4.5z"/><path d="M13.5 6l4.5 4.5"/><path d="M4 15.5L8.5 20"/><path d="M5.6 17.4l1 1" stroke-width="2.6"/></svg></span><span class="nm">Lápis</span></button>
       <button class="dr-item" data-tool="hl" title="Marca-texto (H)"><span class="slot"><svg viewBox="0 0 24 24"><path d="M14 4l6 6-7.5 7.5h-4L6 15v-3.5z"/><path d="M6 15l-3 3v2h5l1.5-2.5"/></svg></span><span class="nm">Marca-texto</span></button>
+      <button class="dr-item" data-tool="fill" title="Balde: toque dentro de um contorno (F)"><span class="slot"><svg viewBox="0 0 24 24"><path d="M5 11l7-7 7 7-7 7z"/><path d="M5 11h14"/><path d="M8.5 4.5L6 2"/><path d="M20.5 15.5c0 1.4-.9 2.5-2 2.5s-2-1.1-2-2.5c0-1.2 2-3.5 2-3.5s2 2.3 2 3.5z"/></svg></span><span class="nm">Balde</span></button>
       <button class="dr-item" data-tool="text" title="Grifo (G)"><span class="slot"><svg viewBox="0 0 24 24"><rect x="3" y="14.5" width="18" height="6" rx="1.2" fill="currentColor" opacity=".35" stroke="none"/><path d="M7 4.5h10"/><path d="M12 4.5v12"/></svg></span><span class="nm">Grifo</span></button>
       <button class="dr-item" data-tool="box" title="Caixa de texto (T)"><span class="slot"><svg viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2" stroke-dasharray="3 2.6"/><path d="M8 9h8M12 9v7.5"/></svg></span><span class="nm">Texto</span></button>
       <button class="dr-item" data-tool="note" title="Nota / comentário (N)"><span class="slot"><svg viewBox="0 0 24 24"><path d="M4.5 4h15a2.5 2.5 0 0 1 2.5 2.5v8.5a2.5 2.5 0 0 1-2.5 2.5h-8l-4.5 3.6v-3.6h-2.5A2.5 2.5 0 0 1 2 15V6.5A2.5 2.5 0 0 1 4.5 4z"/><path d="M12 7l1.05 2.75L15.8 10.8l-2.75 1.05L12 14.6l-1.05-2.75L8.2 10.8l2.75-1.05z" fill="currentColor" stroke="none"/></svg></span><span class="nm">Nota</span></button>
@@ -1150,6 +1152,7 @@ const pdfOpen = data => pdfjsLib.getDocument({ data, enableXfa:false, BinaryData
 /* ---------- estado ---------- */
 // Cada marcação é um objeto em pg.strokes:
 //   traço:  { kind:'ink',  tool:'pen'|'pencil'|'hl', color, alpha, pts:[[x,y,w],…] }
+//   balde:  { kind:'ink',  tool:'fill', color, alpha, pts:[[x,y,0],…] }  (contorno fechado, preenchido)
 //   grifo:  { kind:'text', tool:'text', color, alpha, rects:[[x0,y0,x1,y1],…], text }
 //   caixa:  { kind:'box',  tool:'box',  color, alpha:1, at:[x,topo], w, fs, text }
 //   nota:   { kind:'note', tool:'note', color, alpha:1, at:[x,y] (centro do ícone), text }
@@ -1162,6 +1165,7 @@ const TOOLS = {
   pencil: { name:'Lápis',       colors:PENCIL_COLORS, alpha:.9, size:{ min:.4, max:4,  step:.1, val:1.1 } },
   magic:  { name:'Pena mágica', colors:[],            alpha:1,   size:{ min:.4, max:5,  step:.1, val:1.6 } },
   hl:     { name:'Marca-texto', colors:HL_COLORS,     alpha:.55, size:{ min:4,  max:24, step:1,  val:12 } },
+  fill:   { name:'Balde',       colors:HL_COLORS,     alpha:.55, size:null },
   text:   { name:'Grifo',       colors:HL_COLORS,     alpha:.55, size:null },
   box:    { name:'Texto',       colors:PEN_COLORS,    alpha:1,   size:{ min:7,  max:36, step:1,  val:13 } },
   note:   { name:'Nota',        colors:HL_COLORS,     alpha:1,   size:null },
@@ -1172,7 +1176,7 @@ const TOOLS = {
 const INK_KEY = 'GrimorioInk';
 
 const S = {
-  tool:'pen', color:{ pen:PEN_COLORS[1], pencil:PENCIL_COLORS[0], hl:HL_COLORS[0], text:HL_COLORS[0], box:PEN_COLORS[0], magic:'#f3e8ff', note:'#c4a7ff', ribbon:'#8b5cf6', stamp:'#1d1630' }, fingerDraws:false,
+  tool:'pen', color:{ pen:PEN_COLORS[1], pencil:PENCIL_COLORS[0], hl:HL_COLORS[0], text:HL_COLORS[0], fill:HL_COLORS[0], box:PEN_COLORS[0], magic:'#f3e8ff', note:'#c4a7ff', ribbon:'#8b5cf6', stamp:'#1d1630' }, fingerDraws:false,
   zoom:1, fit:1, doc:null, baseBytes:null, fileName:'documento.pdf', editable:true,
   pages:[], undo:[], redo:[], dirty:false,
 };
@@ -1187,6 +1191,7 @@ function setTool(t){
   document.body.classList.toggle('tool-text', t === 'text');
   document.body.classList.toggle('tool-box', t === 'box');
   document.body.classList.toggle('tool-lasso', t === 'lasso');
+  document.body.classList.toggle('tool-fill', t === 'fill');
   if (t !== 'lasso' && typeof clearSel === 'function') clearSel();
   $('#sizeLbl').textContent = (t === 'box' || t === 'stamp') ? 'Tamanho' : 'Espessura';
   document.body.classList.toggle('tool-stamp', t === 'stamp');
@@ -2318,7 +2323,7 @@ const Unlock = (() => {
 
 /* ---------- oráculo: significado de uma palavra sussurrada (Wiktionary, só quando pedem) ---------- */
 const Oracle = (() => {
-  const WIKT = 'https://en.wiktionary.org', WIKT_PT = 'https://pt.wiktionary.org', KEY = 'grimorio.oracle', MAX = 150, UA = 'Grimorio/2026.11.10-193530-beta (https://grimorio.magenifica.dev)';
+  const WIKT = 'https://en.wiktionary.org', WIKT_PT = 'https://pt.wiktionary.org', KEY = 'grimorio.oracle', MAX = 150, UA = 'Grimorio/2026.11.10-195107-beta (https://grimorio.magenifica.dev)';
   const POS = { Noun:'substantivo', Verb:'verbo', Adjective:'adjetivo', Adverb:'advérbio', Pronoun:'pronome', Preposition:'preposição', Conjunction:'conjunção',
     Interjection:'interjeição', Determiner:'determinante', Article:'artigo', Numeral:'numeral', Particle:'partícula', 'Proper noun':'nome próprio', Phrase:'expressão',
     'Prepositional phrase':'expressão', Idiom:'expressão idiomática', Prefix:'prefixo', Suffix:'sufixo', Contraction:'contração', Abbreviation:'abreviação', Initialism:'sigla', Acronym:'acrônimo' };
@@ -2936,6 +2941,10 @@ function tracePath(ctx, pg, pts, from = 0){
     px = x; py = y; pr = r;
   }
 }
+function tracePoly(ctx, pg, pts){
+  pts.forEach(([x, y], i) => { const q = pg.vp.convertToViewportPoint(x, y); i ? ctx.lineTo(q[0], q[1]) : ctx.moveTo(q[0], q[1]); });
+  ctx.closePath();
+}
 function traceRects(ctx, pg, rects){
   const vp = pg.vp;
   for (const [x0, y0, x1, y1] of rects){
@@ -2969,10 +2978,10 @@ function applyGrain(ctx, clip, ox = 0, oy = 0){   // clip = [x0,y0,x1,y1] em px 
 
 function paintShape(ctx, pg, st){
   ctx.fillStyle = st.color; ctx.beginPath();
-  if (st.kind === 'text') traceRects(ctx, pg, st.rects); else tracePath(ctx, pg, smoothOf(st));
+  if (st.kind === 'text') traceRects(ctx, pg, st.rects); else if (st.tool === 'fill') tracePoly(ctx, pg, st.pts); else tracePath(ctx, pg, smoothOf(st));
   ctx.fill('nonzero');
 }
-let scratch = null;
+let scratch = null, softLayer = null;
 // rolo: a página "vista" de um vizinho (mesmo desenho, deslocado de uma altura de pedaço)
 function shiftedPg(pg, dy){ const vp = pg.vp; return { ...pg, vp:{ scale:vp.scale, width:vp.width, height:vp.height, convertToViewportPoint:(x, y) => vp.convertToViewportPoint(x, y + dy) } }; }
 // traços dos pedaços vizinhos que passam da emenda e invadem esta página
@@ -2994,8 +3003,22 @@ function drawInkOne(pg){
   const top = c.getContext('2d'), hl = pg.hlCanvas.getContext('2d');
   for (const x of [top, hl]){ x.setTransform(1, 0, 0, 1, 0, 0); x.clearRect(0, 0, c.width, c.height); }
   const items = pg.strokes.map(st => [st, pg]); items.push(...seamItems(pg));
+  // marca-texto/balde: traços da mesma cor viram uma tinta só (sobrepor não escurece nem mancha)
+  const soft = new Map();
+  for (const it of items){ const st = it[0]; if (st.alpha < 1 && st.kind === 'ink' && st.tool !== 'pencil' && st.tool !== 'magic'){ const key = st.color + '|' + st.alpha; if (!soft.has(key)) soft.set(key, []); soft.get(key).push(it); } }
+  if (soft.size){
+    if (!softLayer) softLayer = document.createElement('canvas');
+    if (softLayer.width !== c.width || softLayer.height !== c.height){ softLayer.width = c.width; softLayer.height = c.height; }
+    const lx = softLayer.getContext('2d');
+    for (const list of soft.values()){
+      lx.setTransform(1, 0, 0, 1, 0, 0); lx.clearRect(0, 0, c.width, c.height); lx.setTransform(pg.dpr, 0, 0, pg.dpr, 0, 0);
+      for (const [st, p] of list) paintShape(lx, p, st);
+      hl.setTransform(1, 0, 0, 1, 0, 0); hl.globalAlpha = list[0][0].alpha; hl.drawImage(softLayer, 0, 0); hl.globalAlpha = 1;
+    }
+  }
   for (const [st, p] of items){
     if (isOv(st) || st.tool === 'magic') continue;   // tinta mágica: só na camada da vela misteriosa
+    if (st.alpha < 1 && st.kind === 'ink' && st.tool !== 'pencil') continue;   // já foi junto com a mesma cor
     const ctx = st.alpha < 1 ? hl : top;
     if (st.kind === 'stamp'){ drawStamp(top, p, st); continue; }
     if (st.alpha >= 1 && st.tool !== 'pencil'){
@@ -3194,6 +3217,7 @@ function finishEdit(){
 function placeNew(pg, cx, cy){
   if (editing){ finishEdit(); return; }
   const [x, y] = toPdf(pg, cx, cy), view = pg.pdfPage.view;
+  if (S.tool === 'fill'){ bucketFill(pg, x, y); return; }
   if (S.tool === 'stamp'){
     commit(pg, { kind:'stamp', tool:'stamp', id:S.stamp, color:S.color.stamp, alpha:1, at:[x, y], size:TOOLS.stamp.size.val });
     refreshButtons(); scheduleSave(); return;
@@ -3859,7 +3883,7 @@ let active = null;             // traço/borracha/grifo em andamento
 let gest = null;               // gesto de dedo em andamento
 let lastPenAt = 0;
 let tapCand = null;             // toque de dedo que pode virar caixa/nota nova
-const placing = () => S.tool === 'box' || S.tool === 'note' || S.tool === 'stamp';
+const placing = () => S.tool === 'box' || S.tool === 'note' || S.tool === 'stamp' || S.tool === 'fill';
 
 function toPdf(pg, cx, cy){
   const r = pg.el.getBoundingClientRect();
@@ -3927,6 +3951,89 @@ function moveText(e){
   const ctx = live.getContext('2d'); ctx.setTransform(pg.dpr, 0, 0, pg.dpr, 0, liveOY);
   ctx.fillStyle = a.color; ctx.beginPath(); traceRects(ctx, pg, a.sel.rects); ctx.fill();
 }
+/* ---------- balde: preenche a área fechada pelos seus traços ---------- */
+// Desenha só os traços (o PDF não entra, senão as letras travariam a tinta) numa grade em coordenadas do PDF,
+// engrossados um pouco pra fechar frestinhas; inunda a partir do toque; se a tinta chega na borda, não estava
+// fechado. Depois o contorno da área vira um polígono (vai por baixo dos traços, então a linha continua nítida).
+function bucketFill(pg, x, y){
+  const view = pg.pdfPage.view, W0 = view[2] - view[0], H0 = view[3] - view[1];
+  const k = Math.min(2, 1400 / Math.max(W0, H0)), W = Math.ceil(W0 * k), H = Math.ceil(H0 * k), GAP = 2.5;   // GAP em pt
+  const vp = { scale:k, width:W, height:H, convertToViewportPoint:(px, py) => [(px - view[0]) * k, (view[3] - py) * k] };
+  const c = document.createElement('canvas'); c.width = W; c.height = H;
+  const ctx = c.getContext('2d'); ctx.fillStyle = '#000';
+  const items = pg.strokes.map(st => [st, pg]); items.push(...seamItems(pg));
+  for (const [st, p] of items){
+    if (st.kind !== 'ink' || st.tool === 'fill' || (st.tool === 'magic' && !mystic())) continue;
+    const dy = p === pg ? 0 : p.vp.convertToViewportPoint(0, 0)[1] - pg.vp.convertToViewportPoint(0, 0)[1];   // vizinho do rolo
+    const g = { vp:{ ...vp, convertToViewportPoint:(px, py) => [(px - view[0]) * k, (view[3] - py) * k + dy / pg.vp.scale * k] } };
+    ctx.beginPath(); tracePath(ctx, g, smoothOf(st).map(([a, b, w]) => [a, b, w + 2 * GAP])); ctx.fill('nonzero');
+  }
+  const img = ctx.getImageData(0, 0, W, H).data, wall = new Uint8Array(W * H);
+  for (let i = 0; i < W * H; i++) wall[i] = img[i * 4 + 3] > 40 ? 1 : 0;
+  const sx = Math.floor((x - view[0]) * k), sy = Math.floor((view[3] - y) * k);
+  if (sx < 0 || sy < 0 || sx >= W || sy >= H) return;
+  if (wall[sy * W + sx]){ toast('Toque no meio da área, não em cima do traço ✦'); return; }
+  // inundação por linhas
+  const area = new Uint8Array(W * H), stack = [sx, sy]; let leak = false, n = 0;
+  while (stack.length){
+    const yy = stack.pop(); let xx = stack.pop(), i = yy * W + xx;
+    while (xx > 0 && !wall[i - 1] && !area[i - 1]){ xx--; i--; }
+    let up = false, dn = false;
+    for (; xx < W && !wall[i] && !area[i]; xx++, i++){
+      area[i] = 1; n++;
+      if (xx === 0 || xx === W - 1 || yy === 0 || yy === H - 1) leak = true;
+      if (yy > 0){ const u = !wall[i - W] && !area[i - W]; if (u && !up) stack.push(xx, yy - 1); up = u; }
+      if (yy < H - 1){ const d = !wall[i + W] && !area[i + W]; if (d && !dn) stack.push(xx, yy + 1); dn = d; }
+    }
+    if (leak) break;
+  }
+  if (leak){ toast('A tinta vazaria pra página toda: feche o contorno e tente de novo ✦', 3500); return; }
+  // devolve o que os traços engrossados "comeram": a área cresce até o meio do traço
+  dilate(area, W, H, Math.round(GAP * k) + 1);
+  const ring = traceOutline(area, W, H);
+  if (!ring || ring.length < 3){ toast('Área pequena demais pro balde'); return; }
+  const pts = simplifyPoly(ring, .7).map(([px, py]) => [px / k + view[0], view[3] - py / k, 0]);
+  commit(pg, { kind:'ink', tool:'fill', color:S.color.fill, alpha:TOOLS.fill.alpha, pts });
+  refreshButtons(); scheduleSave();
+}
+function dilate(m, W, H, r){   // máximo numa janela quadrada (2r+1), separável
+  const t = new Uint8Array(W * H);
+  for (let y = 0; y < H; y++){ let run = -1e9; const o = y * W;
+    for (let x = 0; x < W; x++){ if (m[o + x]) run = x; if (x - run <= r) t[o + x] = 1; }
+    run = 1e9; for (let x = W - 1; x >= 0; x--){ if (m[o + x]) run = x; if (run - x <= r) t[o + x] = 1; } }
+  m.fill(0);
+  for (let x = 0; x < W; x++){ let run = -1e9;
+    for (let y = 0; y < H; y++){ if (t[y * W + x]) run = y; if (y - run <= r) m[y * W + x] = 1; }
+    run = 1e9; for (let y = H - 1; y >= 0; y--){ if (t[y * W + x]) run = y; if (run - y <= r) m[y * W + x] = 1; } }
+}
+// contorno externo (vizinhança de Moore), em coordenadas de canto de pixel
+function traceOutline(m, W, H){
+  const at = (x, y) => x >= 0 && y >= 0 && x < W && y < H && m[y * W + x];
+  let s = -1; for (let i = 0; i < W * H; i++) if (m[i]){ s = i; break; }
+  if (s < 0) return null;
+  const x0 = s % W, y0 = (s / W) | 0;
+  const D = [[1, 0], [1, 1], [0, 1], [-1, 1], [-1, 0], [-1, -1], [0, -1], [1, -1]];
+  const out = []; let x = x0, y = y0, d = 6, guard = W * H * 4;
+  do {
+    out.push([x + .5, y + .5]);
+    let k = (d + 6) % 8, found = false;
+    for (let j = 0; j < 8; j++, k = (k + 1) % 8){ const nx = x + D[k][0], ny = y + D[k][1]; if (at(nx, ny)){ x = nx; y = ny; d = k; found = true; break; } }
+    if (!found) break;
+  } while ((x !== x0 || y !== y0) && --guard > 0);
+  return out;
+}
+function simplifyPoly(P, eps){   // Douglas–Peucker
+  if (P.length < 4) return P;
+  const keep = new Uint8Array(P.length); keep[0] = keep[P.length - 1] = 1;
+  const st = [[0, P.length - 1]];
+  while (st.length){
+    const [a, b] = st.pop(); let md = 0, mi = -1;
+    const [ax, ay] = P[a], [bx, by] = P[b], dx = bx - ax, dy = by - ay, L = Math.hypot(dx, dy) || 1;
+    for (let i = a + 1; i < b; i++){ const d = Math.abs((P[i][0] - ax) * dy - (P[i][1] - ay) * dx) / L; if (d > md){ md = d; mi = i; } }
+    if (md > eps){ keep[mi] = 1; st.push([a, mi], [mi, b]); }
+  }
+  return P.filter((_, i) => keep[i]);
+}
 function commit(pg, mark){
   pg.strokes.push(mark); assignGroup(pg, mark); S.undo.push({ type:'add', pg, stroke:mark }); S.redo = []; S.dirty = true;
   drawInk(pg);
@@ -3988,6 +4095,7 @@ function markHit(st, x, y, rad){
     return x >= st.at[0] - rad && x <= st.at[0] + st.w + rad && y <= st.at[1] + rad && y >= st.at[1] - h - rad;
   }
   if (st.kind === 'text') return st.rects.some(([x0, y0, x1, y1]) => x >= x0 - rad && x <= x1 + rad && y >= y0 - rad && y <= y1 + rad);
+  if (st.tool === 'fill' && inPoly(st.pts, x, y)) return true;
   const P = st.pts;
   for (let i = 0; i < P.length; i++){
     const [ax, ay, aw] = P[i], lim = rad + aw / 2;
@@ -4188,7 +4296,7 @@ addEventListener('keydown', e => {
   if (k === 'escape'){ openDrawer(false); clearSel(); closeBmCard(); bmPanel(false); return; }
   if (k === 'b' && S.doc){ bmPanel(); return; }
   if ((k === 'delete' || k === 'backspace') && sel){ e.preventDefault(); deleteSel(); return; }
-  const keyTool = { p:'pen', l:'pencil', m:'magic', h:'hl', g:'text', t:'box', n:'note', k:'stamp', v:'lasso', e:'eraser' }[k];
+  const keyTool = { p:'pen', l:'pencil', m:'magic', h:'hl', f:'fill', g:'text', t:'box', n:'note', k:'stamp', v:'lasso', e:'eraser' }[k];
   if (keyTool) setTool(keyTool);
   else if (k === '+' || k === '=') setZoom(S.zoom * 1.25); else if (k === '-') setZoom(S.zoom / 1.25);
 });
@@ -4219,6 +4327,7 @@ function inkAppearance(pts){
   }
   return ops.join('\n') + '\nf\n';
 }
+const polyAppearance = pts => pts.map(([x, y], i) => `${f2(x)} ${f2(y)} ${i ? 'l' : 'm'}`).join('\n') + '\nh f\n';
 const rectsAppearance = rects => rects.map(([x0, y0, x1, y1]) => `${f2(x0)} ${f2(y0)} ${f2(x1 - x0)} ${f2(y1 - y0)} re`).join('\n') + '\nf\n';
 
 // Aparência com transparência + "multiply" (o texto embaixo continua preto), igual à tela.
@@ -4251,7 +4360,7 @@ function addInk(doc, page, list, idx, ghost){
     ...commonFields(st, page, idx), Subtype:'Ink', Rect:rect,
     InkList:list.map(m => m.pts.flatMap(([x, y]) => [+f2(x), +f2(y)])),
     BS:{ Type:'Border', W:+f2(wsum / n), S:'S' },
-    AP:{ N:appearanceStream(ctx, st, list.map(m => inkAppearance(smoothOf(m))).join(''), rect) },
+    AP:{ N:appearanceStream(ctx, st, list.map(m => m.tool === 'fill' ? polyAppearance(m.pts) : inkAppearance(smoothOf(m))).join(''), rect) },
     [INK_KEY]:PDFString.of(data),
     ...(st.tool === 'magic' ? { F:2 } : {}),   // tinta mágica: escondida em qualquer leitor
     ...(st.gid ? { GrimorioGroup:PDFString.of(st.gid) } : {}),
